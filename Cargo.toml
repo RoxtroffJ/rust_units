@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-typenum = "1.18.0"
 num-traits = "0.2.19"
+extended-typenum = {git = "https://github.com/RoxtroffJ/extended-typenum.git"}

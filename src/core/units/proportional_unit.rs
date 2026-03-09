@@ -1,4 +1,5 @@
 //! This module contains the [SIProportionalUnit] trait and the [SIPropUnit] struct.
+use std::hash::Hash;
 pub use super::*;
 
 /// This trait indicates that the unit is directly proportional to the [SIUnit].
@@ -14,18 +15,26 @@ pub use super::*;
 /// **Caution**: 
 /// When building a new unit, make sure that the proportionality constant is not zero, as this will lead to a meaningless unit, 
 /// and divisions by zero when using the unit.
+/// 
+/// ```T``` is the type of the [Quantity], and ```K``` is the type of the proportionality constant.
 pub trait SIProportionalUnit<T>: Unit<T, Dimension = Self::Dim> {
     /// The dimension of the unit. It is the same as the [Dimension](Unit::Dimension) in the [Unit] trait.
     type Dim: Dimension;
+
     /// The type of the proportionality constant between this unit and the [SIUnit].
+    /// 
+    /// This type is unique to the unit because if a unit could handle multiple types,
+    /// then it would store multiple constants, and the implementation of [Unit] would need to make a choice.
     type K;
+
     /// The value of the proportionality constant between this unit and the [SIUnit].
     fn prop_constant(&self) -> Self::K;
 }
 
-/// Use this trait to automatically implement [Unit] for your [SIProportionalUnit]s.
+/// Use this trait to automatically implement the [Unit] trait for your [SIProportionalUnit]s.
 pub trait AutoImplementSIProportionalUnit {}
 
+/// Auto implementation of the [Unit] trait for all [SIProportionalUnit]s that implement the [AutoImplementSIProportionalUnit] trait.
 impl<T, U: SIProportionalUnit<T> + AutoImplementSIProportionalUnit> Unit<T> for U where 
     T: Mul<<U as SIProportionalUnit<T>>::K, Output = T>,
     T: Div<<U as SIProportionalUnit<T>>::K, Output = T>
@@ -98,6 +107,11 @@ impl<K: Clone + PartialEq, D: Dimension> PartialEq for SIPropUnit<K, D> {
 
 impl<K: Clone + Eq, D: Dimension> Eq for SIPropUnit<K, D> {}
 
+impl<K: Clone + Hash, D: Dimension> Hash for SIPropUnit<K, D> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.prop_constant.hash(state);
+    }
+}
 
 
 impl<Kl: Clone, Kr: Clone, Dl: Dimension, Dr: Dimension> Add<SIPropUnit<Kr, Dr>> for SIPropUnit<Kl, Dl> where 

@@ -1,4 +1,7 @@
-//! The units trait and generic implementations.
+//! The [Unit] trait and generic implementations.
+//! 
+//! Units are typed objects that implement the [Unit] trait.
+//! They are not types, but values, so we can operate on them at runtime, create them, store them, ...
 
 use std::marker::PhantomData;
 use std::ops::*;
@@ -13,7 +16,10 @@ use super::*;
 
 /// Trait used to define a unit.
 /// 
-/// A unit allows to convert a numerical value into a dimensioned quantity.
+/// It must provide a [new](Unit::new) and [get](Unit::get) method to respectively
+/// create and retrieve a [Quantity] of the unit. 
+/// 
+/// The type of the quantity is defined by the generic parameter ```T```.
 pub trait Unit<T> {
     
     /// The dimension of the unit.
@@ -30,4 +36,3 @@ pub trait Unit<T> {
     /// Retrieves the value of a [Quantity].
     fn get(&self, quantity: Quantity<T, Self::Dimension>) -> T;
 }
-
