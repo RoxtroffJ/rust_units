@@ -27,8 +27,6 @@ pub struct Dimensionless;
 mod si_exponent;
 pub use si_exponent::*;
 
-use crate::Dimension;
-
 /// A SI-like standalone dimension (eg. length, time, mass, ..., but not a combination of them).
 ///
 /// It contains three generic parameters:
@@ -170,24 +168,27 @@ macro_rules! si_add_dim {
 }
 
 pub mod helpers;
+// use helpers::{CommonHeads, Exponent, E, ComHead1, ComHead2};
 
-impl Add<Dimensionless> for Dimensionless {
-    type Output = Self;
+// impl Add for Dimensionless {
+//     type Output = Self;
 
-    fn add(self, _rhs: Dimensionless) -> Self::Output {
-        self
-    }
-}
+//     fn add(self, _rhs: Self) -> Self::Output {
+//         self
+//     }
+// }
 
-impl<I, O, E1, E2> Add<SIDim<I, O, E2>> for SIDim<I, O, E1>
-where
-    E1: Add<E2>,
-    SIDim<I, O, <E1 as Add<E2>>::Output>: Dimension,
-{
-    type Output = SIDim<I, O, <E1 as Add<E2>>::Output>;
+// impl<D1, D2> Add<D2> for D1 
+// where 
+//     D1: CommonHeads<D2>,
+//     ComHead1<D1, D2>: Exponent,
+//     ComHead2<D1, D2>: Exponent,
 
-    fn add(self, _rhs: SIDim<I, O, E2>) -> Self::Output {
-        Self::Output::default()
-    }
-}
+//     E<ComHead1<D1, D2>>: Add<E<ComHead2<D1, D2>>>
+// {
+//     type Output;
 
+//     fn add(self, rhs: D2) -> Self::Output {
+        
+//     }
+// }

@@ -1,2 +1,3 @@
 - Generalize implementations on SIExponents to Dimensionless, SIDim, SIDimCombined
+  - Attempt was made (see commented code at end of si_system.rs), but requires local traits to work, which is very annoying...
 - Predefine SI System
