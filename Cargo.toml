@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 num-traits = "0.2.19"
-extended-typenum = {git = "https://github.com/RoxtroffJ/extended-typenum.git"}
+extended-typenum = {git = "https://github.com/RoxtroffJ/extended-typenum.git", branch = "main"}
+derive-where = "1.6.0"

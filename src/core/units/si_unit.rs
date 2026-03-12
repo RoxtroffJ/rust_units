@@ -1,6 +1,7 @@
 //! This module contains the [SIUnit] struct and its associated methods.
+use derive_where::derive_where;
+
 use super::*;
-use std::hash::Hash;
 
 /// The SI unit for a dimension.
 ///
@@ -15,7 +16,7 @@ use std::hash::Hash;
 ///
 /// If you need to do that, you can use the [SIUnitTyped] struct, which is the same as [SIUnit] but with
 /// such a type for the proportionality constant, which enables the implementation of the [SIProportionalUnit] trait.
-#[derive(Debug)]
+#[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SIUnit<D: Dimension> {
     dimension: PhantomData<D>,
 }
@@ -41,36 +42,9 @@ impl<T, D: Dimension> Unit<T> for SIUnit<D> {
     }
 }
 
-impl<D: Dimension> Hash for SIUnit<D> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.dimension.hash(state);
-    }
-}
-impl<D: Dimension> Clone for SIUnit<D> {
-    fn clone(&self) -> Self {
-        Self {
-            dimension: self.dimension.clone(),
-        }
-    }
-}
-impl<D: Dimension> Copy for SIUnit<D> {}
-impl<D: Dimension> PartialEq for SIUnit<D> {
-    fn eq(&self, other: &Self) -> bool {
-        self.dimension == other.dimension
-    }
-}
-impl<D: Dimension> Eq for SIUnit<D> {}
-impl<D: Dimension> Default for SIUnit<D> {
-    fn default() -> Self {
-        Self {
-            dimension: Default::default(),
-        }
-    }
-}
-
 /// Same as [SIUnit], but with a type for the proportionality constant (which is 1).
 /// This enables the implementation of the [SIProportionalUnit] trait, and all it's benefits.
-#[derive(Debug)]
+#[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SIUnitTyped<D: Dimension, K: num_traits::One> {
     dimension: PhantomData<D>,
     constant: PhantomData<K>,
@@ -108,35 +82,5 @@ where
 
     fn prop_constant(&self) -> Self::K {
         K::one()
-    }
-}
-
-impl<D: Dimension, K: num_traits::One> Hash for SIUnitTyped<D, K> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.dimension.hash(state);
-        self.constant.hash(state);
-    }
-}
-impl<D: Dimension, K: num_traits::One> Clone for SIUnitTyped<D, K> {
-    fn clone(&self) -> Self {
-        Self {
-            dimension: self.dimension.clone(),
-            constant: self.constant.clone(),
-        }
-    }
-}
-impl<D: Dimension, K: num_traits::One> Copy for SIUnitTyped<D, K> {}
-impl<D: Dimension, K: num_traits::One> PartialEq for SIUnitTyped<D, K> {
-    fn eq(&self, other: &Self) -> bool {
-        self.dimension == other.dimension && self.constant == other.constant
-    }
-}
-impl<D: Dimension, K: num_traits::One> Eq for SIUnitTyped<D, K> {}
-impl<D: Dimension, K: num_traits::One> Default for SIUnitTyped<D, K> {
-    fn default() -> Self {
-        Self {
-            dimension: Default::default(),
-            constant: Default::default(),
-        }
     }
 }

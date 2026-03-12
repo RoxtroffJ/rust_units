@@ -1,6 +1,7 @@
 //! This module contains the [SIProportionalUnit] trait and the [SIPropUnit] struct.
-use std::hash::Hash;
-pub use super::*;
+use derive_where::derive_where;
+
+use super::*;
 
 /// This trait indicates that the unit is directly proportional to the [SIUnit].
 /// This enables the use of operations to derive units from existing ones.
@@ -32,6 +33,9 @@ pub trait SIProportionalUnit<T>: Unit<T, Dimension = Self::Dim> {
 }
 
 /// Use this trait to automatically implement the [Unit] trait for your [SIProportionalUnit]s.
+/// 
+/// This is not done automatically for all [SIProportionalUnit]s to let you have a custom implementation of the [Unit] trait.
+/// However, if you do that, you **MUST** respect the conversion contract between the unit and the SI unit (SI = U*k and U = SI/k).
 pub trait AutoImplementSIProportionalUnit {}
 
 /// Auto implementation of the [Unit] trait for all [SIProportionalUnit]s that implement the [AutoImplementSIProportionalUnit] trait.
@@ -54,7 +58,7 @@ impl<T, U: SIProportionalUnit<T> + AutoImplementSIProportionalUnit> Unit<T> for 
 /// 
 /// The proportionality constant is required to be [Clone] because the [prop_constant](SIProportionalUnit::prop_constant) method returns a copy of it.
 /// A reference can't be used instead of the copy because when converting from or to SI, the [mul](Mul::mul) or [div](Div::div) operator is used, and it consumes the value.
-#[derive(Debug)]
+#[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash; K)]
 pub struct SIPropUnit<K: Clone, D: Dimension> {
     prop_constant: K,
     dimension: PhantomData<D>
@@ -86,30 +90,6 @@ impl<K: Clone, T, D: Dimension> SIProportionalUnit<T> for SIPropUnit<K, D> where
     type K = K;
     fn prop_constant(&self) -> Self::K {
         self.prop_constant.clone()
-    }
-}
-
-
-
-impl<K: Clone, D: Dimension> Clone for SIPropUnit<K, D> {
-    fn clone(&self) -> Self {
-        Self::new(self.prop_constant.clone())
-    }
-}
-
-impl<K: Clone + Copy, D: Dimension> Copy for SIPropUnit<K, D> {}
-
-impl<K: Clone + PartialEq, D: Dimension> PartialEq for SIPropUnit<K, D> {
-    fn eq(&self, other: &Self) -> bool {
-        self.prop_constant == other.prop_constant
-    }
-}
-
-impl<K: Clone + Eq, D: Dimension> Eq for SIPropUnit<K, D> {}
-
-impl<K: Clone + Hash, D: Dimension> Hash for SIPropUnit<K, D> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.prop_constant.hash(state);
     }
 }
 

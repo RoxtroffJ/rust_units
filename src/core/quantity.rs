@@ -1,6 +1,6 @@
 //! Struct quantity and it's generic implementations
 
-use extended_typenum::Pow;
+use derive_where::derive_where;
 use num_traits::{ConstOne, ConstZero, One, Zero};
 
 use super::*;
@@ -24,7 +24,6 @@ use std::{marker::PhantomData, ops::*};
 /// - [RemAssign]
 /// - [Sub]
 /// - [SubAssign]
-/// - [Pow]
 /// 
 /// - [One]
 /// - [Zero]
@@ -35,7 +34,7 @@ use std::{marker::PhantomData, ops::*};
 ///
 /// Similarly to Rust's [Option] enum, this struct also provides functions to help with references management such as
 /// [as_ref](Quantity::as_ref), [as_mut](Quantity::as_mut), [as_deref](Quantity::as_deref), [as_deref_mut](Quantity::as_deref_mut).
-#[derive(Debug)]
+#[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash; T)]
 pub struct Quantity<T, D: Dimension> {
     value: T,
     dimension: PhantomData<D>,
@@ -131,12 +130,15 @@ where
     }
 }
 
-impl<T, D: Dimension> AddAssign for Quantity<T, D>
+/// Adds the other quantity to this quantity.
+/// 
+/// This quantity does NOT change dimension.
+impl<Tl, Dl: Dimension, Tr, Dr: Dimension> AddAssign<Quantity<Tr, Dr>> for Quantity<Tl, Dl>
 where
-    T: AddAssign,
-    D: AddAssign,
+    Tl: AddAssign<Tr>,
+    Dl: AddAssign<Dr>,
 {
-    fn add_assign(&mut self, rhs: Self) {
+    fn add_assign(&mut self, rhs: Quantity<Tr, Dr>) {
         *self.get_mut_si() += rhs.get_si()
     }
 }
@@ -154,12 +156,15 @@ where
     }
 }
 
-impl<T, D: Dimension> DivAssign for Quantity<T, D>
+/// Divides this quantity by the other quantity.
+/// 
+/// This quantity does NOT change dimension.
+impl<Tl, Dl: Dimension, Tr, Dr: Dimension> DivAssign<Quantity<Tr, Dr>> for Quantity<Tl, Dl>
 where
-    T: DivAssign,
-    D: DivAssign,
+    Tl: DivAssign<Tr>,
+    Dl: DivAssign<Dr>,
 {
-    fn div_assign(&mut self, rhs: Self) {
+    fn div_assign(&mut self, rhs: Quantity<Tr, Dr>) {
         *self.get_mut_si() /= rhs.get_si()
     }
 }
@@ -177,12 +182,15 @@ where
     }
 }
 
-impl<T, D: Dimension> MulAssign for Quantity<T, D>
+/// Multiplies this quantity to the other quantity.
+/// 
+/// This quantity does NOT change dimension.
+impl<Tl, Dl: Dimension, Tr, Dr: Dimension> MulAssign<Quantity<Tr, Dr>> for Quantity<Tl, Dl>
 where
-    T: MulAssign,
-    D: MulAssign,
+    Tl: MulAssign<Tr>,
+    Dl: MulAssign<Dr>,
 {
-    fn mul_assign(&mut self, rhs: Self) {
+    fn mul_assign(&mut self, rhs: Quantity<Tr, Dr>) {
         *self.get_mut_si() *= rhs.get_si()
     }
 }
@@ -213,12 +221,15 @@ where
     }
 }
 
-impl<T, D: Dimension> RemAssign for Quantity<T, D>
+/// Sets this quantity to the remainder of the division of this quantity by the other quantity.
+/// 
+/// This quantity does NOT change dimension.
+impl<Tl, Dl: Dimension, Tr, Dr: Dimension> RemAssign<Quantity<Tr, Dr>> for Quantity<Tl, Dl>
 where
-    T: RemAssign,
-    D: RemAssign,
+    Tl: RemAssign<Tr>,
+    Dl: RemAssign<Dr>,
 {
-    fn rem_assign(&mut self, rhs: Self) {
+    fn rem_assign(&mut self, rhs: Quantity<Tr, Dr>) {
         *self.get_mut_si() %= rhs.get_si()
     }
 }
@@ -236,28 +247,20 @@ where
     }
 }
 
-impl<T, D: Dimension> SubAssign for Quantity<T, D>
+/// Substracts the other quantity to this quantity.
+/// 
+/// This quantity does NOT change dimension.
+
+impl<Tl, Dl: Dimension, Tr, Dr: Dimension> SubAssign<Quantity<Tr, Dr>> for Quantity<Tl, Dl>
 where
-    T: SubAssign,
-    D: SubAssign,
+    Tl: SubAssign<Tr>,
+    Dl: SubAssign<Dr>,
 {
-    fn sub_assign(&mut self, rhs: Self) {
+    fn sub_assign(&mut self, rhs: Quantity<Tr, Dr>) {
         *self.get_mut_si() -= rhs.get_si()
     }
 }
 
-impl<T, D:Dimension, RHS> Pow<RHS> for Quantity<T, D>
-where 
-    T: Pow<RHS>,
-    D: Pow<RHS>,
-    <D as Pow<RHS>>::Output: Dimension,
-{
-    type Output = Quantity<<T as Pow<RHS>>::Output, <D as Pow<RHS>>::Output>;
-
-    fn powi(self, exp: RHS) -> Self::Output {
-        Self::Output::from_si(self.get_si().powi(exp))
-    }
-}
 
 impl<'a, T, D: Dimension> From<&'a Quantity<T, D>> for Quantity<&'a T, D> {
     fn from(value: &'a Quantity<T, D>) -> Quantity<&'a T, D> {
@@ -305,42 +308,4 @@ where
     Quantity<T, D>: Zero,
 {
     const ZERO: Self = Self::from_si(<T as ConstZero>::ZERO);
-}
-
-impl<T: Clone, D: Dimension> Clone for Quantity<T, D> {
-    fn clone(&self) -> Self {
-        Self { value: self.value.clone(), dimension: PhantomData }
-    }
-}
-
-impl<T: PartialEq, D: Dimension> PartialEq for Quantity<T, D> {
-    fn eq(&self, other: &Self) -> bool {
-        self.value == other.value
-    }
-}
-
-impl<T: Eq, D: Dimension> Eq for Quantity<T, D> {}
-
-impl<T: PartialOrd, D: Dimension> PartialOrd for Quantity<T, D> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.value.partial_cmp(&other.value)
-    }
-}
-
-impl<T: Ord, D: Dimension + Ord> Ord for Quantity<T, D> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.value.cmp(&other.value)
-    }
-}
-
-impl<T: std::hash::Hash, D: Dimension + std::hash::Hash> std::hash::Hash for Quantity<T, D> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.value.hash(state);
-    }
-}
-
-impl<T: Default, D: Dimension> Default for Quantity<T, D> {
-    fn default() -> Self {
-         Self::from_si(T::default())
-    }
 }
