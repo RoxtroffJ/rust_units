@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 use std::ops::*;
 
+use extended_typenum::{GetZero, IsNull, IsZero, ZeroOf};
+
 /// The exponent of a dimension in the SI system.
 ///
 /// Adding them is only possible if they are equal. The result is the same as the two added exponents.
@@ -125,4 +127,16 @@ where
     Self: Sub<Rhs, Output = Self>,
 {
     fn sub_assign(&mut self, _rhs: Rhs) {}
+}
+
+impl<E> IsZero for SIExponent<E> 
+where E: IsZero
+{
+    type Output = IsNull<E>;
+}
+
+impl<E> GetZero for SIExponent<E>
+where E: GetZero
+{
+    type Output = SIExponent<ZeroOf<E>>;
 }

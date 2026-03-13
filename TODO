@@ -1,3 +1,4 @@
 - Generalize implementations on SIExponents to Dimensionless, SIDim, SIDimCombined
-  - Attempt was made (see commented code at end of si_system.rs), but requires local traits to work, which is very annoying...
+  - Define a macro to do it, otherwise it is a mess (Add and Mul already done)
 - Predefine SI System
+- Add examples to everything throughout the crate.
