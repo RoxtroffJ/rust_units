@@ -1,4 +1,3 @@
-- Generalize implementations on SIExponents to Dimensionless, SIDim, SIDimCombined
-  - Define a macro to do it, otherwise it is a mess (Add and Mul already done)
 - Predefine SI System
 - Add examples to everything throughout the crate.
+- numtraits

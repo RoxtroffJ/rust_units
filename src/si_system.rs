@@ -15,11 +15,28 @@
 //! In the actual SI system, adding two [Quantities](crate::Quantity) together is only possible if the exponents are the same.
 //! Multiplying two [Quantities](crate::Quantity) together is always possible,
 //! and the result's dimension exponents are equal to the sum of the corresponding exponents of the two multiplied quantities.
+//! 
+//! Here is the list of supported operations:
+//! 
+//! - [Add]
+//! - [AddAssign]
+//! - [Div]
+//! - [DivAssign]
+//! - [Mul]
+//! - [MulAssign]
+//! - [Neg]
+//! - [Rem]
+//! - [RemAssign]
+//! - [Sub]
+//! - [SubAssign]
 
-use std::{marker::PhantomData, ops::{Add, Mul}};
+use std::{
+    marker::PhantomData,
+    ops::*,
+};
 
 use derive_where::derive_where;
-use extended_typenum::{IsZero, Sum, U0, U1};
+use extended_typenum::{Sum, U0, U1};
 
 /// A SI(-like) dimension.
 ///
@@ -120,7 +137,7 @@ where
 ///
 /// In order to create a new dimension, you need a name for that dimension and an identifier name.
 /// Additionally, you can specify a *non zero* default exponent type for the created dimension. Otherwise, [`SIExponent<P1>`] is used.
-/// This exponent type must implement at least [IsZero] and [GetZero](extended_typenum::GetZero).
+/// This exponent type must implement at least [IsZero](extended_typenum::IsZero) and [GetZero](extended_typenum::GetZero).
 ///
 /// The identifier name is used to differentiate incompatible [SIDimSystem]s.
 /// The default exponent for the new dimensions allows you to put a custom type there, and therefore customize the behavior.
@@ -145,11 +162,11 @@ where
 /// // Note that combinations of the dimensions must NOT be added. Instead, define operations on dimensions. (TODO: explain that better)
 /// // If you do not want the new system, you can omit the "= MySILikeSystem" part.
 ///
-/// let l = Quantity::<_,Length>::from_si(12.);
-/// let m = Quantity::<_,Time>::from_si(42.);
-/// 
-/// let prod: Quantity<_,op!{Length*Time}> = l*m;
-/// // let sum = l + m; // Does not compile, which is good :)
+/// let m = Quantity::<_,Length>::from_si(12.);
+/// let s = Quantity::<_,Time>::from_si(42.);
+///
+/// let speed: Quantity<_,op!{Length/Time}> = m/s;
+/// // let sum = m + s; // Does not compile, which is good :)
 /// ```
 ///
 /// NOTE: if you do something like this:
@@ -200,114 +217,66 @@ macro_rules! si_add_dim {
 }
 
 pub mod helpers;
-use helpers::*;
 
-impl Add for Dimensionless {
-    type Output = Self;
+mod macros;
+use crate::{si_impl_bin_op, si_impl_un_op};
 
-    fn add(self, _rhs: Self) -> Self::Output {
-        self
-    }
+macro_rules! impl_bin_std_op {
+    ($Trait:ident, $fn:ident) => {
+        si_impl_bin_op! {
+            $Trait => Output
+            {
+                [fn $fn(self, _rhs: Dimensionless)] -> Self::Output;
+            }
+            {
+                [fn $fn(self, _rhs: SIDim<I, O, E2, Rest2>)] -> Self::Output;
+            }
+            {
+                [fn $fn(self, _rhs: SIDimension<D2>)] -> Self::Output;
+            }
+        }
+    };
 }
 
-impl<I, O, E1, Rest1, E2, Rest2> Add<SIDim<I, O, E2, Rest2>> for SIDim<I, O, E1, Rest1>
-where
-    E1: Add<E2>,
-    SIDimension<Rest1>: Add<SIDimension<Rest2>>,
-    <E1 as Add<E2>>::Output: IsZero,
-    <SIDimension<Rest1> as Add<SIDimension<Rest2>>>::Output: GetDimension,
-    SIDim<
-        I,
-        O,
-        <E1 as Add<E2>>::Output,
-        GetDim<<SIDimension<Rest1> as Add<SIDimension<Rest2>>>::Output>,
-    >: SimplifyHead,
-    SimplH<
-        SIDim<
-            I,
-            O,
-            <E1 as Add<E2>>::Output,
-            GetDim<<SIDimension<Rest1> as Add<SIDimension<Rest2>>>::Output>,
-        >,
-    >: Default,
-{
-    type Output = SimplH<
-        SIDim<
-            I,
-            O,
-            <E1 as Add<E2>>::Output,
-            GetDim<<SIDimension<Rest1> as Add<SIDimension<Rest2>>>::Output>,
-        >,
-    >;
-
-    fn add(self, _rhs: SIDim<I, O, E2, Rest2>) -> Self::Output {
-        Self::Output::default()
-    }
+macro_rules! impl_bin_std_assign_op {
+    ($Trait:ident, $fn:ident) => {
+        si_impl_bin_op! {
+            $Trait => 
+            {
+                fn $fn(&mut self, _rhs: Dimensionless) {}
+            }
+            {
+                fn $fn(&mut self, _rhs: SIDim<I, O, E2, Rest2>) {}
+            }
+            {
+                fn $fn(&mut self, _rhs: SIDimension<D2>) {}
+            }
+        }
+    };
 }
 
-impl<D1, D2> Add<SIDimension<D2>> for SIDimension<D1> 
-where 
-    D1: CommonHeads<D2>,
-    ComD1<D1, D2>: Add<ComD2<D1, D2>>
-{
-    type Output = SIDimension<<ComD1<D1, D2> as Add<ComD2<D1, D2>>>::Output>;
 
-    fn add(self, _rhs: SIDimension<D2>) -> Self::Output {
-        Self::Output::default()
+
+impl_bin_std_op!{Add, add}
+impl_bin_std_assign_op!{AddAssign, add_assign}
+impl_bin_std_op!{Div, div}
+impl_bin_std_assign_op!{DivAssign, div_assign}
+impl_bin_std_op!{Mul, mul}
+impl_bin_std_assign_op!{MulAssign, mul_assign}
+impl_bin_std_op!{Rem, rem}
+impl_bin_std_assign_op!{RemAssign, rem_assign}
+impl_bin_std_op!{Sub, sub}
+impl_bin_std_assign_op!{SubAssign, sub_assign}
+
+si_impl_un_op!{
+    Neg => Output
+    {
+        [fn neg(self)] -> Self::Output;
     }
-}
-
-impl Mul for Dimensionless {
-    type Output = Self;
-
-    fn mul(self, _rhs: Self) -> Self::Output {
-        self
+    {
+        [fn neg(self)] -> Self::Output;
     }
-}
-
-impl<I, O, E1, Rest1, E2, Rest2> Mul<SIDim<I, O, E2, Rest2>> for SIDim<I, O, E1, Rest1>
-where
-    E1: Mul<E2>,
-    SIDimension<Rest1>: Mul<SIDimension<Rest2>>,
-    <E1 as Mul<E2>>::Output: IsZero,
-    <SIDimension<Rest1> as Mul<SIDimension<Rest2>>>::Output: GetDimension,
-    SIDim<
-        I,
-        O,
-        <E1 as Mul<E2>>::Output,
-        GetDim<<SIDimension<Rest1> as Mul<SIDimension<Rest2>>>::Output>,
-    >: SimplifyHead,
-    SimplH<
-        SIDim<
-            I,
-            O,
-            <E1 as Mul<E2>>::Output,
-            GetDim<<SIDimension<Rest1> as Mul<SIDimension<Rest2>>>::Output>,
-        >,
-    >: Default,
-{
-    type Output = SimplH<
-        SIDim<
-            I,
-            O,
-            <E1 as Mul<E2>>::Output,
-            GetDim<<SIDimension<Rest1> as Mul<SIDimension<Rest2>>>::Output>,
-        >,
-    >;
-
-    fn mul(self, _rhs: SIDim<I, O, E2, Rest2>) -> Self::Output {
-        Self::Output::default()
-    }
-}
-
-impl<D1, D2> Mul<SIDimension<D2>> for SIDimension<D1> 
-where 
-    D1: CommonHeads<D2>,
-    ComD1<D1, D2>: Mul<ComD2<D1, D2>>
-{
-    type Output = SIDimension<<ComD1<D1, D2> as Mul<ComD2<D1, D2>>>::Output>;
-
-    fn mul(self, _rhs: SIDimension<D2>) -> Self::Output {
-        Self::Output::default()
+    {
+        [fn neg(self)] -> Self::Output;
     }
 }
