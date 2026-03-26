@@ -2,7 +2,8 @@
 //!
 //! Implementation of the SI system and helpers to create other systems that use the same logic.
 //!
-//! A SI-like dimension system is a set of dimensions. These dimensions are defined and controlled by an exponent, and are independent from each other.
+//! A SI-like dimension system is a set of base dimensions. These dimensions are defined and controlled by an exponent, 
+//! and are independent from each other.
 //!
 //! With this implementation of the SI system, the type that implement [Dimension](crate::Dimension) is the generic type [SIDimension].
 //! The generic argument of [SIDimension] can be of two types:
@@ -18,17 +19,30 @@
 //! 
 //! Here is the list of supported operations:
 //! 
-//! - [Add]
-//! - [AddAssign]
-//! - [Div]
-//! - [DivAssign]
-//! - [Mul]
-//! - [MulAssign]
-//! - [Neg]
-//! - [Rem]
-//! - [RemAssign]
-//! - [Sub]
-//! - [SubAssign]
+//! - From [std::ops]:
+//!   - [Add]
+//!   - [AddAssign]
+//!   - [Div]
+//!   - [DivAssign]
+//!   - [Mul]
+//!   - [MulAssign]
+//!   - [Neg]
+//!   - [Rem]
+//!   - [RemAssign]
+//!   - [Sub]
+//!   - [SubAssign]
+//! - From [num_traits]
+//!   - [Inv]
+//!   - [MulAdd]
+//!   - [MulAddAssign]
+//!   - [Pow]
+//! 
+//! Implementing more operations can be done in two ways:
+//! - At the [SIDimension] level (recomended): ```impl<D1, D2> Foo<SIDimension<D2>> for SIDimension<D1> where D1: Foo<D2> {...}```
+//! - At the exponent level.
+//! 
+//! Use the implementation at [SIDimension] level when your operator has the same behaviour regardless of the type of the 
+//! exponents ([SIExponent] or other).
 
 use std::{
     marker::PhantomData,
@@ -60,6 +74,7 @@ pub struct SIDimension<D> {
 pub struct Dimensionless;
 
 mod si_exponent;
+use num_traits::{Inv, MulAdd, MulAddAssign, Pow};
 pub use si_exponent::*;
 
 /// A SI(-like) Dimension, composed of various exponents associated to base dimensions.
@@ -219,7 +234,7 @@ macro_rules! si_add_dim {
 pub mod helpers;
 
 mod macros;
-use crate::{si_impl_bin_op, si_impl_un_op};
+use crate::{si_impl_bin_op, si_impl_un_op, si_impl_tern_op};
 
 macro_rules! impl_bin_std_op {
     ($Trait:ident, $fn:ident) => {
@@ -255,7 +270,56 @@ macro_rules! impl_bin_std_assign_op {
     };
 }
 
+macro_rules! impl_tern_std_op {
+    ($Trait:ident, $fn:ident) => {
+        si_impl_tern_op! {
+            $Trait => Output
+            {
+                [fn $fn(self, _rhs1: Dimensionless, _rhs2: Dimensionless)] -> Self::Output;
+            }
+            {
+                [fn $fn(self, _rhs1: SIDim<I, O, E2, Rest2>, _rhs2: SIDim<I, O, E3, Rest3>)] -> Self::Output;
+            }
+            {
+                [fn $fn(self, _rhs1: SIDimension<D2>, _rhs3: SIDimension<D3>)] -> Self::Output;
+            }
+        }
+    };
+}
 
+macro_rules! impl_tern_std_assign_op {
+    ($Trait:ident, $fn:ident) => {
+        si_impl_tern_op! {
+            $Trait => 
+            {
+                fn $fn(&mut self, _rhs1: Dimensionless, _rhs2: Dimensionless) {}
+            }
+            {
+                fn $fn(&mut self, _rhs1: SIDim<I, O, E2, Rest2>, _rhs2: SIDim<I, O, E3, Rest3>) {}
+            }
+            {
+                fn $fn(&mut self, _rhs1: SIDimension<D2>, _rhs3: SIDimension<D3>) {}
+            }
+        }
+    };
+}
+
+macro_rules! impl_unary_std_op {
+    ($Trait:ident, $fn:ident) => {
+        si_impl_un_op!{
+            $Trait => Output
+            {
+                [fn $fn(self)] -> Self::Output;
+            }
+            {
+                [fn $fn(self)] -> Self::Output;
+            }
+            {
+                [fn $fn(self)] -> Self::Output;
+            }
+        }
+    };
+}
 
 impl_bin_std_op!{Add, add}
 impl_bin_std_assign_op!{AddAssign, add_assign}
@@ -267,16 +331,9 @@ impl_bin_std_op!{Rem, rem}
 impl_bin_std_assign_op!{RemAssign, rem_assign}
 impl_bin_std_op!{Sub, sub}
 impl_bin_std_assign_op!{SubAssign, sub_assign}
+impl_unary_std_op!{Neg, neg}
 
-si_impl_un_op!{
-    Neg => Output
-    {
-        [fn neg(self)] -> Self::Output;
-    }
-    {
-        [fn neg(self)] -> Self::Output;
-    }
-    {
-        [fn neg(self)] -> Self::Output;
-    }
-}
+impl_tern_std_op!{MulAdd, mul_add}
+impl_tern_std_assign_op!{MulAddAssign, mul_add_assign}
+impl_bin_std_op!{Pow, pow}
+impl_unary_std_op!{Inv, inv}

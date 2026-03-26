@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 use std::ops::*;
 
-use extended_typenum::{GetZero, IsNull, IsZero, ZeroOf};
+use extended_typenum::{op, GetZero, IsNull, IsZero, ZeroOf};
+use num_traits::{Inv, MulAdd, MulAddAssign, Pow};
 
 /// The exponent of a dimension in the SI system.
 ///
@@ -10,17 +11,24 @@ use extended_typenum::{GetZero, IsNull, IsZero, ZeroOf};
 /// Dividing them is always possible, and the result is the difference of the two divided exponents.
 ///
 /// Here is the exhaustive list of all supported operations on the exponents:
-/// - [Add]
-/// - [AddAssign]
-/// - [Div]
-/// - [DivAssign]
-/// - [Mul]
-/// - [MulAssign]
-/// - [Neg]
-/// - [Rem]
-/// - [RemAssign]
-/// - [Sub]
-/// - [SubAssign]
+///
+/// - From [std::ops]:
+///   - [Add]
+///   - [AddAssign]
+///   - [Div]
+///   - [DivAssign]
+///   - [Mul]
+///   - [MulAssign]
+///   - [Neg]
+///   - [Rem]
+///   - [RemAssign]
+///   - [Sub]
+///   - [SubAssign]
+/// - From [num_traits]
+///   - [Inv]
+///   - [MulAdd]
+///   - [MulAddAssign]
+///   - [Pow]
 ///
 /// The type parameter `E` is a number representing the exponent.
 pub struct SIExponent<E> {
@@ -129,14 +137,57 @@ where
     fn sub_assign(&mut self, _rhs: Rhs) {}
 }
 
-impl<E> IsZero for SIExponent<E> 
-where E: IsZero
+impl<E> IsZero for SIExponent<E>
+where
+    E: IsZero,
 {
     type Output = IsNull<E>;
 }
 
 impl<E> GetZero for SIExponent<E>
-where E: GetZero
+where
+    E: GetZero,
 {
     type Output = SIExponent<ZeroOf<E>>;
+}
+
+impl<E> Inv for SIExponent<E>
+where
+    E: Neg,
+{
+    type Output = SIExponent<<E as Neg>::Output>;
+
+    fn inv(self) -> Self::Output {
+        unreachable!()
+    }
+}
+
+impl<E, A, B> MulAdd<A, B> for SIExponent<E>
+where
+    Self: Mul<A>,
+    op!(Self * A): Add<B>,
+{
+    type Output = op!((Self * A) + B);
+
+    fn mul_add(self, _a: A, _b: B) -> Self::Output {
+        unreachable!()
+    }
+}
+
+impl<E, A, B> MulAddAssign<A, B> for SIExponent<E>
+where
+    Self: MulAdd<A, B, Output = Self>,
+{
+    fn mul_add_assign(&mut self, _a: A, _b: B) {}
+}
+
+impl<E1, E2> Pow<SIExponent<E2>> for SIExponent<E1>
+where
+    E1: Mul<E2>,
+{
+    type Output = SIExponent<op!(E1 * E2)>;
+
+    fn pow(self, _rhs: SIExponent<E2>) -> Self::Output {
+        unreachable!()
+    }
 }
