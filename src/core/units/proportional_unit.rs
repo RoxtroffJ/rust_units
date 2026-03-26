@@ -1,44 +1,46 @@
-//! This module contains the [SIProportionalUnit] trait and the [SIPropUnit] struct.
+//! This module contains the [`SIProportionalUnit`] trait and the [`SIPropUnit`] struct.
 use derive_where::derive_where;
 
 use super::*;
 
-/// This trait indicates that the unit is directly proportional to the [SIUnit].
+/// This trait indicates that the unit is directly proportional to the [`SIUnit`].
 /// This enables the use of operations to derive units from existing ones.
 /// 
-/// If k is the proportionality constant returned by [prop_constant](SIProportionalUnit::prop_constant) and
+/// If k is the proportionality constant returned by [`prop_constant`](SIProportionalUnit::prop_constant) and
 /// U is the current unit and
-/// SI is the [SIUnit],
+/// SI is the [`SIUnit`],
 /// then SI = U*k.
 /// 
-/// The [Unit] trait is automatically implemented if the conversion operation in both direction between SI and U are possible (SI = U*k and U = SI/k).
+/// The [`Unit`] trait is automatically implemented if the conversion operation in both direction between SI and U are possible (SI = U*k and U = SI/k).
 /// 
 /// **Caution**: 
 /// When building a new unit, make sure that the proportionality constant is not zero, as this will lead to a meaningless unit, 
 /// and divisions by zero when using the unit.
 /// 
-/// ```T``` is the type of the [Quantity], and ```K``` is the type of the proportionality constant.
+/// Be especially careful when building units by combining some together.
+/// 
+/// ```T``` is the type of the [`Quantity`], and ```K``` is the type of the proportionality constant.
 pub trait SIProportionalUnit<T>: Unit<T, Dimension = Self::Dim> {
-    /// The dimension of the unit. It is the same as the [Dimension](Unit::Dimension) in the [Unit] trait.
+    /// The dimension of the unit. It is the same as the [`Dimension`](Unit::Dimension) in the [`Unit`] trait.
     type Dim: Dimension;
 
-    /// The type of the proportionality constant between this unit and the [SIUnit].
+    /// The type of the proportionality constant between this unit and the [`SIUnit`].
     /// 
     /// This type is unique to the unit because if a unit could handle multiple types,
-    /// then it would store multiple constants, and the implementation of [Unit] would need to make a choice.
+    /// then it would store multiple constants, and the implementation of [`Unit`] would need to make a choice.
     type K;
 
-    /// The value of the proportionality constant between this unit and the [SIUnit].
+    /// The value of the proportionality constant between this unit and the [`SIUnit`].
     fn prop_constant(&self) -> Self::K;
 }
 
-/// Use this trait to automatically implement the [Unit] trait for your [SIProportionalUnit]s.
+/// Use this trait to automatically implement the [`Unit`] trait for your [`SIProportionalUnit`]s.
 /// 
-/// This is not done automatically for all [SIProportionalUnit]s to let you have a custom implementation of the [Unit] trait.
+/// This is not done automatically for all [`SIProportionalUnit`]s to let you have a custom implementation of the [`Unit`] trait.
 /// However, if you do that, you **MUST** respect the conversion contract between the unit and the SI unit (SI = U*k and U = SI/k).
 pub trait AutoImplementSIProportionalUnit {}
 
-/// Auto implementation of the [Unit] trait for all [SIProportionalUnit]s that implement the [AutoImplementSIProportionalUnit] trait.
+/// Auto implementation of the [`Unit`] trait for all [`SIProportionalUnit`]s that implement the [`AutoImplementSIProportionalUnit`] trait.
 impl<T, U: SIProportionalUnit<T> + AutoImplementSIProportionalUnit> Unit<T> for U where 
     T: Mul<<U as SIProportionalUnit<T>>::K, Output = T>,
     T: Div<<U as SIProportionalUnit<T>>::K, Output = T>
@@ -54,10 +56,10 @@ impl<T, U: SIProportionalUnit<T> + AutoImplementSIProportionalUnit> Unit<T> for 
     }
 }
 
-/// A struct for a unit proportional to the [SIUnit].
+/// A struct for a unit proportional to the [`SIUnit`].
 /// 
-/// The proportionality constant is required to be [Clone] because the [prop_constant](SIProportionalUnit::prop_constant) method returns a copy of it.
-/// A reference can't be used instead of the copy because when converting from or to SI, the [mul](Mul::mul) or [div](Div::div) operator is used, and it consumes the value.
+/// The proportionality constant is required to be [`Clone`] because the [`prop_constant`](SIProportionalUnit::prop_constant) method returns a copy of it.
+/// A reference can't be used instead of the copy because when converting from or to SI, the [`mul`](Mul::mul) or [`div`](Div::div) operator is used, and it consumes the value.
 #[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash; K)]
 pub struct SIPropUnit<K: Clone, D: Dimension> {
     prop_constant: K,
@@ -65,9 +67,9 @@ pub struct SIPropUnit<K: Clone, D: Dimension> {
 }
 
 impl<K: Clone, D: Dimension> SIPropUnit<K, D> {
-    /// Creates a new [SIPropUnit] with the given proportionality constant.
+    /// Creates a new [`SIPropUnit`] with the given proportionality constant.
     /// 
-    /// Check the [SIProportionalUnit] trait for the definition of the proportionality constant.
+    /// Check the [`SIProportionalUnit`] trait for the definition of the proportionality constant.
     /// 
     /// The proportionality constant must be non zero as the unit will then be meaningless.
     /// It could also lead to divisions by zero when using the unit.

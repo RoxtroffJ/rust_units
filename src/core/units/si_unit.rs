@@ -1,4 +1,4 @@
-//! This module contains the [SIUnit] struct and its associated methods.
+//! This module contains the [`SIUnit`] struct and its associated methods.
 use derive_where::derive_where;
 
 use super::*;
@@ -7,22 +7,22 @@ use super::*;
 ///
 /// This is the unit that is used in computations between quantities.
 ///
-/// For example, the [SIUnit] of a [Length] quantity is the meter. This means that if you define a length
-/// using [YARD]s, it will be internally converted to meters, and all computations will be done in meters.
-/// When you retrieve the value of the quantity in [YARD]s, it will be converted back from meters to yards.
+/// For example, the [`SIUnit`] of a [`Length`] quantity is the meter. This means that if you define a length
+/// using [`YARD`]s, it will be internally converted to meters, and all computations will be done in meters.
+/// When you retrieve the value of the quantity in [`YARD`]s, it will be converted back from meters to yards.
 ///
-/// Note: The [SIUnit] does not implement [SIProportionalUnit] because this would require to define a type
+/// Note: The [`SIUnit`] does not implement [`SIProportionalUnit`] because this would require to define a type
 /// for a fictional proportionality constant (equal to 1).
 ///
-/// If you need to do that, you can use the [SIUnitTyped] struct, which is the same as [SIUnit] but with
-/// such a type for the proportionality constant, which enables the implementation of the [SIProportionalUnit] trait.
+/// If you need to do that, you can use the [`SIUnitTyped`] struct, which is the same as [`SIUnit`] but with
+/// such a type for the proportionality constant, which enables the implementation of the [`SIProportionalUnit`] trait.
 #[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SIUnit<D: Dimension> {
     dimension: PhantomData<D>,
 }
 
 impl<D: Dimension> SIUnit<D> {
-    /// Creates a new [SIUnit] object.
+    /// Creates a new [`SIUnit`] object.
     pub fn new() -> Self {
         Self {
             dimension: PhantomData,
@@ -42,8 +42,8 @@ impl<T, D: Dimension> Unit<T> for SIUnit<D> {
     }
 }
 
-/// Same as [SIUnit], but with a type for the proportionality constant (which is 1).
-/// This enables the implementation of the [SIProportionalUnit] trait, and all it's benefits.
+/// Same as [`SIUnit`], but with a type for the proportionality constant (which is 1).
+/// This enables the implementation of the [`SIProportionalUnit`] trait, and all it's benefits.
 #[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SIUnitTyped<D: Dimension, K: num_traits::One> {
     dimension: PhantomData<D>,
@@ -51,7 +51,7 @@ pub struct SIUnitTyped<D: Dimension, K: num_traits::One> {
 }
 
 impl<D: Dimension, K: num_traits::One> SIUnitTyped<D, K> {
-    /// Creates a new [SIUnitTyped].
+    /// Creates a new [`SIUnitTyped`].
     pub fn new() -> Self {
         Self {
             dimension: PhantomData,

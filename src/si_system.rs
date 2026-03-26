@@ -5,44 +5,40 @@
 //! A SI-like dimension system is a set of base dimensions. These dimensions are defined and controlled by an exponent,
 //! and are independent from each other.
 //!
-//! With this implementation of the SI system, the type that implement [Dimension](crate::Dimension) is the generic type [SIDimension].
-//! The generic argument of [SIDimension] can be of two types:
-//! - [Dimensionless]: All the exponents are equal to zero. A dimensionless quantity is just a numerical value.
-//! - [SIDim]: Similar to [TArr](extended_typenum::TArr), except it contains dimension descriptions.
+//! With this implementation of the SI system, the type that implement [`Dimension`](crate::Dimension) is the generic type [`SIDimension`].
+//! The generic argument of [`SIDimension`] can be of two types:
+//! - [`Dimensionless`]: All the exponents are equal to zero. A dimensionless quantity is just a numerical value.
+//! - [`SIDim`]: Similar to [`TArr`](extended_typenum::TArr), except it contains dimension descriptions.
 //!
 //! Operations on non dimensionless quantities are only possible if the operation is also defined to be possible on
 //! all the non zero exponents.
 //!
-//! In the actual SI system, adding two [Quantities](crate::Quantity) together is only possible if the exponents are the same.
-//! Multiplying two [Quantities](crate::Quantity) together is always possible,
+//! In the actual SI system, adding two [`Quantities`](crate::Quantity) together is only possible if the exponents are the same.
+//! Multiplying two [`Quantities`](crate::Quantity) together is always possible,
 //! and the result's dimension exponents are equal to the sum of the corresponding exponents of the two multiplied quantities.
 //!
 //! Here is the list of supported operations:
 //!
-//! - From [std::ops]:
-//!   - [Add]
-//!   - [AddAssign]
-//!   - [Div]
-//!   - [DivAssign]
-//!   - [Mul]
-//!   - [MulAssign]
-//!   - [Neg]
-//!   - [Rem]
-//!   - [RemAssign]
-//!   - [Sub]
-//!   - [SubAssign]
-//! - From [num_traits]
-//!   - [Inv]
-//!   - [MulAdd]
-//!   - [MulAddAssign]
-//!   - [Pow]
+//! - From [`std::ops`]:
+//!   - [`Add`]
+//!   - [`AddAssign`]
+//!   - [`Div`]
+//!   - [`DivAssign`]
+//!   - [`Mul`]
+//!   - [`MulAssign`]
+//!   - [`Neg`]
+//!   - [`Rem`]
+//!   - [`RemAssign`]
+//!   - [`Sub`]
+//!   - [`SubAssign`]
+//! - From [`num_traits`]
+//!   - [`Inv`]
+//!   - [`MulAdd`]
+//!   - [`MulAddAssign`]
+//!   - [`Pow`]
 //!
 //! Implementing more operations can be done in two ways:
-//! - At the [SIDimension] level (recomended): ```impl<D1, D2> Foo<SIDimension<D2>> for SIDimension<D1> where D1: Foo<D2> {...}```
-//! - At the exponent level.
-//!
-//! Use the implementation at [SIDimension] level when your operator has the same behaviour regardless of the type of the
-//! exponents ([SIExponent] or other).
+//! - TODO: Explain
 
 use std::{marker::PhantomData, ops::*};
 
@@ -51,11 +47,11 @@ use extended_typenum::{op, Sum, U0, U1};
 
 /// A SI(-like) dimension.
 ///
-/// More precisely, this struct is just a wrapper that implements [Dimension](crate::Dimension).
+/// More precisely, this struct is just a wrapper that implements [`Dimension`](crate::Dimension).
 /// The actual dimension is defined by its generic type parameter. This generic can be of two types:
 ///
-/// - [Dimensionless]: All the exponents are equal to zero. A dimensionless quantity is just a numerical value.
-/// - [SIDim]: Similar to [TArr](extended_typenum::TArr), except it contains dimension descriptions.
+/// - [`Dimensionless`]: All the exponents are equal to zero. A dimensionless quantity is just a numerical value.
+/// - [`SIDim`]: Similar to [`TArr`](extended_typenum::TArr), except it contains dimension descriptions.
 ///
 /// It is these two types that perform all the magic, check their doc for more info.
 #[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
@@ -63,32 +59,32 @@ pub struct SIDimension<D> {
     dim: PhantomData<D>,
 }
 
-/// The dimensionless dimension.
+/// The dimensionless dimension, used in [`SIDimension`].
 ///
-/// It is meant to be used in a [SIDimension]. It does not implement [Dimension](crate::Dimension), the [SIDimension] does.
+/// It is meant to be used in a [`SIDimension`]. It does not implement [`Dimension`](crate::Dimension), the [`SIDimension`] does.
 ///
-/// Note that dimensionless is still a dimension, with its units ([DEGREE], [RADIAN], ...), even if it just represents a number.
+/// Note that dimensionless is still a dimension, with its units ([`DEGREE`], [`RADIAN`], ...), even if it just represents a number.
 pub struct Dimensionless;
 
 mod si_exponent;
 use num_traits::{Inv, MulAdd, MulAddAssign, Pow};
 pub use si_exponent::*;
 
-/// A SI(-like) Dimension, composed of various exponents associated to base dimensions.
+/// A SI(-like) Dimension, used in [`SIDimension`], composed of various exponents associated to base dimensions.
 ///
-/// It is meant to be used in a [SIDimension]. It does not implement [Dimension](crate::Dimension), the [SIDimension] does.
+/// It is meant to be used in a [`SIDimension`]. It does not implement [`Dimension`](crate::Dimension), the [`SIDimension`] does.
 ///
-/// The implementation is similar to a [tarr](extended_typenum::tarr) (ie. liked list), but it contains base dimensions,
-/// with associated exponent. In the analogy with [tarr](extended_typenum::tarr), [SIDim] is [TArr](extended_typenum::TArr),
-/// and [Dimensionless] is [ATerm](extended_typenum::ATerm)
+/// The implementation is similar to a [`tarr`](extended_typenum::tarr) (ie. liked list), but it contains base dimensions,
+/// with associated exponent. In the analogy with [`tarr`](extended_typenum::tarr), [`SIDim`] is [`TArr`](extended_typenum::TArr),
+/// and [`Dimensionless`] is [`ATerm`](extended_typenum::ATerm)
 ///
-/// [SIDim] contains four generic parameters:
+/// [`SIDim`] contains four generic parameters:
 /// - `I`: Identifier of the dimension.
-/// - `O`: Order of the dimension. It is a number type used to keep the [SIDim] sorted, which is important if we want
+/// - `O`: Order of the dimension. It is a number type used to keep the [`SIDim`] sorted, which is important if we want
 /// to be sure that there is only one type representing a given physical dimension.
 /// - `E`: Exponent of the dimension. It is a special number type that dictates what operations can and can't be made on the dimension.
-/// The implementation of the actual SI system uses [SIExponent] for this type.
-/// - `Rest`: The tail of the list, containing the other base dimensions. It is either also [SIDim] or [Dimensionless].
+/// The implementation of the actual SI system uses [`SIExponent`] for this type.
+/// - `Rest`: The tail of the list, containing the other base dimensions. It is either also [`SIDim`] or [`Dimensionless`].
 #[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SIDim<I, O, E, Rest> {
     id: PhantomData<I>,
@@ -99,12 +95,12 @@ pub struct SIDim<I, O, E, Rest> {
 
 /// A SI-like dimension system.
 ///
-/// It is used to create [SIDim]s that are compatible with each other.
-/// To do that, use the [si_add_dim](crate::si_add_dim) macro.
+/// It is used to create [`SIDim`]s that are compatible with each other.
+/// To do that, use the [`si_add_dim`](crate::si_add_dim) macro.
 ///
 /// This type has one generic. This generic is none of your business.
 /// It is just used to store data required to create new compatible dimensions
-/// with the [si_add_dim](crate::si_add_dim) macro.
+/// with the [`si_add_dim`](crate::si_add_dim) macro.
 #[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SIDimSystem<Dims> {
     dimensions: PhantomData<Dims>,
@@ -112,16 +108,16 @@ pub struct SIDimSystem<Dims> {
 
 /// The empty SI-like dimension system.
 ///
-/// You can use it with the [si_add_dim](crate::si_add_dim) macro to create your own
+/// You can use it with the [`si_add_dim`](crate::si_add_dim) macro to create your own
 /// SI-like dimensions systems.
 pub type EmptySILikeSystem = SIDimSystem<U0>;
 
-/// Adds a dimension to a [SIDimSystem].
+/// Adds a dimension to a [`SIDimSystem`].
 ///
-/// It is the trait on which the [si_add_dim](crate::si_add_dim) macro is based,
+/// It is the trait on which the [`si_add_dim`](crate::si_add_dim) macro is based,
 /// and therefore, it is recommended to use this macro instead of this trait directly.
 ///
-/// The trait is only meant to be implemented by [SIDimSystem].
+/// The trait is only meant to be implemented by [`SIDimSystem`].
 /// Implementing it for other types is not recommended.
 pub trait AddDim {
     /// The new dimension system after adding the dimension.
@@ -129,10 +125,10 @@ pub trait AddDim {
     /// It is compatible with the old one.
     type NewDimSystem;
 
-    /// The `O` parameter of [SIDim] for the new dimension.
+    /// The `O` parameter of [`SIDim`] for the new dimension.
     ///
     /// Unless you implemented the trait yourself manually in a bad way,
-    /// a [SIDim<ID, NewOrder, E, Dimensionless>] will be compatible with both the old and new dimension systems
+    /// a [`SIDim<ID, NewOrder, E, Dimensionless>`] will be compatible with both the old and new dimension systems
     /// if `ID` is not already present in the old system.
     type NewOrder;
 }
@@ -145,26 +141,26 @@ where
     type NewOrder = Sum<O, U1>;
 }
 
-/// Macro to add dimensions to a SI-like dimension system ([SIDimSystem]).
+/// Macro to add dimensions to a SI-like dimension system ([`SIDimSystem`]).
 ///
 /// In order to create a new dimension, you need a name for that dimension and an identifier name.
-/// Additionally, you can specify a *non zero* default exponent type for the created dimension. Otherwise, [`SIExponent<P1>`] is used.
-/// This exponent type must implement at least [IsZero](extended_typenum::IsZero) and [GetZero](extended_typenum::GetZero).
+/// Additionally, you can specify a *non zero* default exponent type for the created dimension. Otherwise, [`SIExponent<CrossInt<P1>>`] is used.
+/// This exponent type must implement at least [`IsZero`](extended_typenum::IsZero) and [`GetZero`](extended_typenum::GetZero).
 ///
-/// The identifier name is used to differentiate incompatible [SIDimSystem]s.
+/// The identifier name is used to differentiate incompatible [`SIDimSystem`]s.
 /// The default exponent for the new dimensions allows you to put a custom type there, and therefore customize the behavior.
 ///
 /// ## Example:
 /// ```
 /// use rust_units::{si_add_dim, Quantity};
 /// use rust_units::si_system::{EmptySILikeSystem, SIExponent};
-/// use extended_typenum::{P2, op};
+/// use extended_typenum::{CrossInt, P2, op};
 ///
 /// // Let's create a system with three dimensions: length, time and mass.
 /// si_add_dim!{EmptySILikeSystem =>
 ///     (Length, LengthID),
 ///     (Time, TimeID),
-///     (MassSquared, MassID, SIExponent<P2>) // Here we create Mass^2 instead of just Mass, because why not!
+///     (MassSquared, MassID, SIExponent<CrossInt<P2>>) // Here we create Mass^2 instead of just Mass, because why not!
 ///                                           // Don't forget the SIExponent or you will have surprising behavior!
 ///                                           // (exponent behaving like number instead of power of number)
 /// = MySILikeSystem}
@@ -216,7 +212,7 @@ macro_rules! si_add_dim {
     };
     // Same as previous one, but with exponent ommited.
     ($System:ty => ($Dim:ident, $DimID:ident), $($rest:tt)*) => {
-        $crate::si_add_dim!($System => ($Dim, $DimID, $crate::si_system::SIExponent<extended_typenum::P1>), $($rest)*)
+        $crate::si_add_dim!($System => ($Dim, $DimID, $crate::si_system::SIExponent<extended_typenum::CrossInt<extended_typenum::P1>>), $($rest)*)
     };
 
     // Same as above, without trailing comma.

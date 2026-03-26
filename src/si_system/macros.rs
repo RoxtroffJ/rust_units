@@ -1,4 +1,4 @@
-/// Genereates the impl for a binary operator for [Dimensionless](super::Dimensionless).
+/// Genereates the impl for a binary operator for [`Dimensionless`](super::Dimensionless).
 ///
 /// ## Example:
 /// ```
@@ -28,7 +28,7 @@
 ///
 /// This expands to an ```impl MyOperator<Dimensionless> for Dimensionless```.
 ///
-/// All the type outputs will be put to [Dimensionless](super::Dimensionless).
+/// All the type outputs will be put to [`Dimensionless`](super::Dimensionless).
 ///
 #[macro_export]
 macro_rules! si_dimensionless_impl_bin_op {
@@ -65,7 +65,7 @@ macro_rules! si_dimensionless_impl_bin_op {
     };
 }
 
-/// Genereates the impl for a binary operator for [SIDim](super::SIDim).
+/// Genereates the impl for a binary operator for [`SIDim`](super::SIDim).
 ///
 /// ## Example:
 /// ```
@@ -95,7 +95,7 @@ macro_rules! si_dimensionless_impl_bin_op {
 ///
 /// This expands to an ```impl<I, O, E1, Rest1, E2, Rest2> MyOperator<SIDim<I, O, E2, Rest2>> for SIDim<I, O, E1, Rest1>```.
 ///
-/// The implementation is then similar to [zip](std::iter::Iterator::zip) then [map](std::iter::Iterator::map).
+/// The implementation is then similar to [`zip`](std::iter::Iterator::zip) then [`map`](std::iter::Iterator::map).
 ///
 /// Note: It requires, amongst other:
 ///
@@ -165,7 +165,7 @@ macro_rules! si_dim_impl_bin_op {
     };
 }
 
-/// Genereates the impl for a binary operator for [SIDimension](super::SIDimension).
+/// Genereates the impl for a binary operator for [`SIDimension`](super::SIDimension).
 ///
 /// ## Example:
 /// ```
@@ -195,7 +195,7 @@ macro_rules! si_dim_impl_bin_op {
 ///
 /// This expands to an ```impl<D1, D2> MyOperator<SIDimension<D2>> for SIDimension<D1>```.
 ///
-/// The implementation is then similar to [zip](std::iter::Iterator::zip) then [map](std::iter::Iterator::map).
+/// The implementation is then similar to [`zip`](std::iter::Iterator::zip) then [`map`](std::iter::Iterator::map).
 ///
 #[macro_export]
 macro_rules! si_dimension_impl_bin_op {
@@ -237,9 +237,9 @@ macro_rules! si_dimension_impl_bin_op {
     };
 }
 
-/// Combines [si_dimensionless_impl_bin_op](crate::si_dimensionless_impl_bin_op),
-/// [si_dim_impl_bin_op](crate::si_dim_impl_bin_op) and
-/// [si_dimension_impl_bin_op](crate::si_dimension_impl_bin_op).
+/// Combines [`si_dimensionless_impl_bin_op`](crate::si_dimensionless_impl_bin_op),
+/// [`si_dim_impl_bin_op`](crate::si_dim_impl_bin_op) and
+/// [`si_dimension_impl_bin_op`](crate::si_dimension_impl_bin_op).
 ///
 /// See their doc for more info.
 ///
@@ -288,7 +288,7 @@ macro_rules! si_impl_bin_op {
 
 
 
-/// Generates the impl for a ternary operator for [Dimensionless](super::Dimensionless).
+/// Generates the impl for a ternary operator for [`Dimensionless`](super::Dimensionless).
 ///
 /// ## Example:
 /// ```
@@ -353,7 +353,7 @@ macro_rules! si_dimensionless_impl_tern_op {
     };
 }
 
-/// Generates the impl for a ternary operator for [SIDim](super::SIDim).
+/// Generates the impl for a ternary operator for [`SIDim`](super::SIDim).
 ///
 /// ## Example:
 /// ```
@@ -469,7 +469,7 @@ macro_rules! si_dim_impl_tern_op {
 
 
 
-/// Generates the impl for a ternary operator for [SIDimension](super::SIDimension).
+/// Generates the impl for a ternary operator for [`SIDimension`](super::SIDimension).
 ///
 /// ## Example:
 /// ```
@@ -590,7 +590,7 @@ macro_rules! si_impl_tern_op {
     };
 }
 
-/// Genereates the impl for a unary operator for [Dimensionless](super::Dimensionless).
+/// Genereates the impl for a unary operator for [`Dimensionless`](super::Dimensionless).
 ///
 /// Works similarly to `si_dimensionless_impl_bin_op` but for unary operators (no RHS).
 #[macro_export]
@@ -628,7 +628,7 @@ macro_rules! si_dimensionless_impl_un_op {
     };
 }
 
-/// Genereates the impl for a unary operator for [SIDim](super::SIDim).
+/// Genereates the impl for a unary operator for [`SIDim`](super::SIDim).
 ///
 /// Mirrors `si_dim_impl_bin_op` but for unary operators (no RHS type parameters).
 #[macro_export]
@@ -692,7 +692,7 @@ macro_rules! si_dim_impl_un_op {
     };
 }
 
-/// Genereates the impl for a unary operator for [SIDimension](super::SIDimension).
+/// Genereates the impl for a unary operator for [`SIDimension`](super::SIDimension).
 ///
 /// Mirrors `si_dimension_impl_bin_op` but for unary operators (no RHS).
 #[macro_export]

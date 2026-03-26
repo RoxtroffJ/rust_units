@@ -13,33 +13,33 @@ use std::{marker::PhantomData, ops::*};
 /// One can set/access the value by providing a unit compatible with the dimension of the value.
 ///
 /// If the dimension permits it, it implements the following traits:
-/// - from [std::ops]:
-///   - [Add]
-///   - [AddAssign]
-///   - [Div]
-///   - [DivAssign]
-///   - [Mul]
-///   - [MulAssign]
-///   - [Neg]
-///   - [Rem]
-///   - [RemAssign]
-///   - [Sub]
-///   - [SubAssign]
+/// - from [`std::ops`]:
+///   - [`Add`]
+///   - [`AddAssign`]
+///   - [`Div`]
+///   - [`DivAssign`]
+///   - [`Mul`]
+///   - [`MulAssign`]
+///   - [`Neg`]
+///   - [`Rem`]
+///   - [`RemAssign`]
+///   - [`Sub`]
+///   - [`SubAssign`]
 ///
-/// - from [num_traits]:
-///   - [One]
-///   - [Zero]
-///   - [ConstOne]
-///   - [ConstZero]
-///   - [Inv]
-///   - [MulAdd]
-///   - [MulAddAssign]
-///   - [Pow]
+/// - from [`num_traits`]:
+///   - [`One`]
+///   - [`Zero`]
+///   - [`ConstOne`]
+///   - [`ConstZero`]
+///   - [`Inv`]
+///   - [`MulAdd`]
+///   - [`MulAddAssign`]
+///   - [`Pow`]
 ///
 /// If you want to use a quantity in other operations, you need to implement it yourself.
 ///
-/// Similarly to Rust's [Option] enum, this struct also provides functions to help with references management such as
-/// [as_ref](Quantity::as_ref), [as_mut](Quantity::as_mut), [as_deref](Quantity::as_deref), [as_deref_mut](Quantity::as_deref_mut).
+/// Similarly to Rust's [`Option`] enum, this struct also provides functions to help with references management such as
+/// [`as_ref`](Quantity::as_ref), [`as_mut`](Quantity::as_mut), [`as_deref`](Quantity::as_deref), [`as_deref_mut`](Quantity::as_deref_mut).
 #[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash; T)]
 pub struct Quantity<T, D: Dimension> {
     value: T,
@@ -47,7 +47,7 @@ pub struct Quantity<T, D: Dimension> {
 }
 
 impl<T, D: Dimension> Quantity<T, D> {
-    /// Creates a new quantity from it's SI (default) [unit](super::units::Unit).
+    /// Creates a new quantity from it's SI (default) [`unit`](super::units::Unit).
     pub const fn from_si(value: T) -> Self {
         Self {
             value,
@@ -65,17 +65,17 @@ impl<T, D: Dimension> Quantity<T, D> {
         unit.get(self)
     }
 
-    /// Returns the numerical value of the quantity in SI (default) [unit](super::units::Unit).
+    /// Returns the numerical value of the quantity in SI (default) [`unit`](super::units::Unit).
     pub fn get_si(self) -> T {
         self.value
     }
 
-    /// Returns a reference to the numerical value of the quantity in SI (default) [unit](super::units::Unit).
+    /// Returns a reference to the numerical value of the quantity in SI (default) [`unit`](super::units::Unit).
     pub fn get_ref_si(&self) -> &T {
         &self.value
     }
 
-    /// Returns a mutable reference to the numerical value of the quantity in SI (default) [unit](super::units::Unit).
+    /// Returns a mutable reference to the numerical value of the quantity in SI (default) [`unit`](super::units::Unit).
     pub fn get_mut_si(&mut self) -> &mut T {
         &mut self.value
     }

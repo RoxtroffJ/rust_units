@@ -12,23 +12,23 @@ use num_traits::{Inv, MulAdd, MulAddAssign, Pow};
 ///
 /// Here is the exhaustive list of all supported operations on the exponents:
 ///
-/// - From [std::ops]:
-///   - [Add]
-///   - [AddAssign]
-///   - [Div]
-///   - [DivAssign]
-///   - [Mul]
-///   - [MulAssign]
-///   - [Neg]
-///   - [Rem]
-///   - [RemAssign]
-///   - [Sub]
-///   - [SubAssign]
-/// - From [num_traits]
-///   - [Inv]
-///   - [MulAdd]
-///   - [MulAddAssign]
-///   - [Pow]
+/// - From [`std::ops`]:
+///   - [`Add`]
+///   - [`AddAssign`]
+///   - [`Div`]
+///   - [`DivAssign`]
+///   - [`Mul`]
+///   - [`MulAssign`]
+///   - [`Neg`]
+///   - [`Rem`]
+///   - [`RemAssign`]
+///   - [`Sub`]
+///   - [`SubAssign`]
+/// - From [`num_traits`]
+///   - [`Inv`]
+///   - [`MulAdd`]
+///   - [`MulAddAssign`]
+///   - [`Pow`]
 ///
 /// The type parameter `E` is a number representing the exponent.
 pub struct SIExponent<E> {
@@ -44,7 +44,7 @@ impl<E> Add for SIExponent<E> {
     }
 }
 
-/// Only possible if [Add] is defined and the result is the same as implementing type.
+/// Only possible if [`Add`] is defined and the result is the same as implementing type.
 impl<E, Rhs> AddAssign<Rhs> for SIExponent<E>
 where
     Self: Add<Rhs, Output = Self>,
@@ -63,7 +63,7 @@ where
     }
 }
 
-/// Only possible if [Div] is defined and the result is the same as implementing type.
+/// Only possible if [`Div`] is defined and the result is the same as implementing type.
 impl<E, Rhs> DivAssign<Rhs> for SIExponent<E>
 where
     Self: Div<Rhs, Output = Self>,
@@ -82,7 +82,7 @@ where
     }
 }
 
-/// Only possible if [Mul] is defined and the result is the same as implementing type.
+/// Only possible if [`Mul`] is defined and the result is the same as implementing type.
 impl<E, Rhs> MulAssign<Rhs> for SIExponent<E>
 where
     Self: Mul<Rhs, Output = Self>,
@@ -112,7 +112,7 @@ where
     }
 }
 
-/// Only possible if [Rem] is defined and the result is the same as implementing type.
+/// Only possible if [`Rem`] is defined and the result is the same as implementing type.
 impl<E, Rhs> RemAssign<Rhs> for SIExponent<E>
 where
     Self: Rem<Rhs, Output = Self>,
@@ -129,7 +129,7 @@ impl<E> Sub for SIExponent<E> {
     }
 }
 
-/// Only possible if [Sub] is defined and the result is the same as implementing type.
+/// Only possible if [`Sub`] is defined and the result is the same as implementing type.
 impl<E, Rhs> SubAssign<Rhs> for SIExponent<E>
 where
     Self: Sub<Rhs, Output = Self>,

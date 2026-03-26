@@ -1,6 +1,6 @@
 //! A series of traits and structs required to make the SI system work.
 //! 
-//! In this modules, when we say "dimension", we mean the content of [SIDimension].
+//! In this modules, when we say "dimension", we mean the content of [`SIDimension`].
 //!
 //! It is not recommended to implement these traits and use these structs directly unless you know what you are doing.
 
@@ -19,15 +19,15 @@ use super::*;
 // Get dimension
 // ----------------------------------------------
 
-/// Returns the dimension of a [SIDimension].
+/// Returns the dimension of a [`SIDimension`].
 /// 
-/// This is only meant to be implemented by [SIDimension].
+/// This is only meant to be implemented by [`SIDimension`].
 pub trait GetDimension {
-    /// The dimension of the implementor [SIDimension].
+    /// The dimension of the implementor [`SIDimension`].
     type Output;
 }
 
-/// Returns the dimension of a [SIDimension].
+/// Returns the dimension of a [`SIDimension`].
 pub type GetDim<SI> = <SI as GetDimension>::Output;
 
 impl<D> GetDimension for SIDimension<D> {
@@ -38,11 +38,11 @@ impl<D> GetDimension for SIDimension<D> {
 // IsDimless
 // ----------------------------------------------
 
-/// Indicates if the implementing trait gets simplified to [Dimensionless].
+/// Indicates if the implementing trait gets simplified to [`Dimensionless`].
 pub trait IsDimless {
-    /// Should be [True] or [False].
+    /// Should be [`True`] or [`False`].
     ///
-    /// Indicates if the implementing trait gets simplified to [Dimensionless].
+    /// Indicates if the implementing trait gets simplified to [`Dimensionless`].
     type Output;
 }
 
@@ -70,7 +70,7 @@ pub trait Exponent {
 }
 
 /// Gets the exponent of the head of the given dimension.
-/// If the dimension is [Dimensionless], then [Dimensionless] is returned.
+/// If the dimension is [`Dimensionless`], then [`Dimensionless`] is returned.
 pub type E<D> = <D as Exponent>::Output;
 
 impl<I, O, E, Rest> Exponent for SIDim<I, O, E, Rest> {
@@ -86,13 +86,13 @@ impl Exponent for Dimensionless {
 // ----------------------------------------------
 
 /// Gets the order of the head of the implementor dimension.
-/// If the dimension is [Dimensionless], then [OrderDimensionless] is returned.
+/// If the dimension is [`Dimensionless`], then [`OrderDimensionless`] is returned.
 pub trait Order {
     /// The order
     type Output;
 }
 
-/// The type returned by [Order] for [Dimensionless].
+/// The type returned by [`Order`] for [`Dimensionless`].
 pub struct OrderDimensionless;
 
 /// Gets the order of the given dimension.
@@ -106,7 +106,7 @@ impl Order for Dimensionless {
     type Output = OrderDimensionless;
 }
 
-// Since [Dimensionless] is at the end of the [SIDim],
+// Since [`Dimensionless`] is at the end of the [`SIDim`],
 // it is greater than any other order.
 impl Cmp<OrderDimensionless> for OrderDimensionless {
     type Output = Equal;
@@ -202,12 +202,12 @@ impl Tail for Dimensionless {
 
 /// Trait meant to be implemented by `D` in  [`SIDimension<D>`].
 ///
-/// It indicates that the dimension is valid, ie that [`SIDimension<D>`] can implement [Dimension].
+/// It indicates that the dimension is valid, ie that [`SIDimension<D>`] can implement [`Dimension`].
 pub trait Valid {}
 
 impl Valid for Dimensionless {}
 
-/// A [SIDim] is valid if it is sorted in ascending order by `O` parameter,
+/// A [`SIDim`] is valid if it is sorted in ascending order by `O` parameter,
 /// with no repetition of `O` parameter, and all the exponents are non zero.
 impl<I, Or, E, Rest> Valid for SIDim<I, Or, E, Rest>
 where
@@ -238,7 +238,7 @@ pub type ComD1<D1, D2> = <D1 as CommonHeads<D2>>::This;
 pub type ComD2<D1, D2> = <D1 as CommonHeads<D2>>::Other;
 
 pub mod common_heads_helpers {
-    //! Helper struct and trait for implementation of [CommonHeads].
+    //! Helper struct and trait for implementation of [`CommonHeads`].
     use extended_typenum::Compare;
 
     use super::*;
@@ -250,10 +250,10 @@ pub mod common_heads_helpers {
         cmp: PhantomData<C>,
     }
 
-    /// Builds a [CompareHeads] for two dimensions.
+    /// Builds a [`CompareHeads`] for two dimensions.
     pub type CompHeads<D1, D2> = CompareHeads<D1, D2, Compare<O<D1>, O<D2>>>;
 
-    /// Same as [CommonHeads] but for [CompareHeads].
+    /// Same as [`CommonHeads`] but for [`CompareHeads`].
     pub trait CommonHeadsCompare {
         /// Updated first dimension
         type Dim1;
@@ -316,7 +316,7 @@ where
 /// Simplifies the head of a dimension.
 ///
 /// If you call this recursively on all a dimension, you will get
-/// an equivalent [Valid] result.
+/// an equivalent [`Valid`] result.
 pub trait SimplifyHead {
     /// The dimension with simplified head.
     type Output;
@@ -325,7 +325,7 @@ pub trait SimplifyHead {
 /// Simplifies the head of a dimension.
 ///
 /// If you call this recursively on all a dimension, you will get
-/// an equivalent [Valid] result.
+/// an equivalent [`Valid`] result.
 pub type SimplH<D> = <D as SimplifyHead>::Output;
 
 impl SimplifyHead for Dimensionless {
