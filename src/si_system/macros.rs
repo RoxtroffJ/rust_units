@@ -273,11 +273,6 @@ macro_rules! si_dimension_impl_bin_op {
 ///     }
 /// }
 /// ```
-///
-/// This expands to an ```impl MyOperator<Dimensionless> for Dimensionless```.
-///
-/// All the type outputs will be put to [Dimensionless](super::Dimensionless).
-///
 #[macro_export]
 macro_rules! si_impl_bin_op {
     ($Trait:ident => $($Output:ident),* $(,)? {$($content_dimless:tt)*} {$($content_dim:tt)*} {$($content_dimension:tt)*}) => {
@@ -286,6 +281,12 @@ macro_rules! si_impl_bin_op {
         $crate::si_dimension_impl_bin_op!($Trait => $($Output),* {$($content_dimension)*});
     };
 }
+
+
+
+//----------------------------TODO: REDO------------------------------------------------
+
+
 
 /// Generates the impl for a ternary operator for [Dimensionless](super::Dimensionless).
 ///
@@ -400,11 +401,12 @@ macro_rules! si_dim_impl_tern_op {
                 $crate::si_system::SIDimension<Rest3>,
             >,
             $(
-            <E1 as $Trait<E2, E3>>::$Output: extended_typenum::IsZero,
+            
             <$crate::si_system::SIDimension<Rest1> as $Trait<
                 $crate::si_system::SIDimension<Rest2>,
                 $crate::si_system::SIDimension<Rest3>
             >>::$Output: $crate::si_system::helpers::GetDimension,
+            
             $crate::si_system::SIDim<
                 I,
                 O,
@@ -414,6 +416,7 @@ macro_rules! si_dim_impl_tern_op {
                     $crate::si_system::SIDimension<Rest3>
                 >>::$Output>,
             >: $crate::si_system::helpers::SimplifyHead,
+            
             $crate::si_system::helpers::SimplH<
                 $crate::si_system::SIDim<
                     I,
@@ -462,6 +465,10 @@ macro_rules! si_dim_impl_tern_op {
     };
 }
 
+
+
+
+
 /// Generates the impl for a ternary operator for [SIDimension](super::SIDimension).
 ///
 /// ## Example:
@@ -502,22 +509,19 @@ macro_rules! si_dimension_impl_tern_op {
         where
             D1: $crate::si_system::helpers::CommonHeads<D2>,
             $crate::si_system::helpers::ComD1<D1, D2>: $crate::si_system::helpers::CommonHeads<D3>,
-            $crate::si_system::helpers::ComD1<
-                $crate::si_system::helpers::ComD1<D1, D2>,
-                D3,
-            >: $Trait<$crate::si_system::helpers::ComD2<
-                $crate::si_system::helpers::ComD1<D1, D2>,
-                D3,
-            >>,
+            $crate::si_system::helpers::ComD2<D1, D2>: $crate::si_system::helpers::CommonHeads<D3>,
+            $crate::si_system::helpers::ComD1<$crate::si_system::helpers::ComD1<D1, D2>, D3>: 
+                $Trait<
+                    $crate::si_system::helpers::ComD1<$crate::si_system::helpers::ComD2<D1, D2>, D3>,
+                    $crate::si_system::helpers::ComD2<$crate::si_system::helpers::ComD2<D1, D2>, D3>
+                >,
         {
             $(type $Output = $crate::si_system::SIDimension<
-                <$crate::si_system::helpers::ComD1<
-                    $crate::si_system::helpers::ComD1<D1, D2>,
-                    D3,
-                > as $Trait<$crate::si_system::helpers::ComD2<
-                    $crate::si_system::helpers::ComD1<D1, D2>,
-                    D3,
-                >>>::$Output
+                <$crate::si_system::helpers::ComD1<$crate::si_system::helpers::ComD1<D1, D2>, D3> as 
+                $Trait<
+                    $crate::si_system::helpers::ComD1<$crate::si_system::helpers::ComD2<D1, D2>, D3>,
+                    $crate::si_system::helpers::ComD2<$crate::si_system::helpers::ComD2<D1, D2>, D3>
+                >>::$Output
             >;
             )*
 
@@ -551,12 +555,12 @@ macro_rules! si_dimension_impl_tern_op {
 /// use rust_units::si_impl_tern_op;
 /// use rust_units::si_system::{Dimensionless, SIDim, SIDimension};
 ///
-/// trait MyTernary<R1, R2> {
+/// trait MyTernary<Rhs1, Rhs2> {
 ///     type Output1;
 ///     type Output2;
 ///
-///     fn some_function1(self, r1: R1, r2: R2) -> Self::Output1;
-///     fn some_function2(self, r1: R1, r2: R2) -> Self::Output2;
+///     fn some_function1(self, rhs1: Rhs1, rhs2: Rhs2) -> Self::Output1;
+///     fn some_function2(self, rhs1: Rhs1, rhs2: Rhs2) -> Self::Output2;
 /// }
 ///
 /// si_impl_tern_op!{
@@ -729,7 +733,6 @@ macro_rules! si_dimension_impl_un_op {
             {$($content)*});
     };
 }
-
 /// Combines `si_dimensionless_impl_un_op`, `si_dim_impl_un_op` and `si_dimension_impl_un_op`.
 #[macro_export]
 macro_rules! si_impl_un_op {

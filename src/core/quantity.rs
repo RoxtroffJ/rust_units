@@ -1,7 +1,7 @@
 //! Struct quantity and it's generic implementations
 
 use derive_where::derive_where;
-use num_traits::{ConstOne, ConstZero, One, Zero};
+use num_traits::{ConstOne, ConstZero, Inv, MulAdd, MulAddAssign, One, Pow, Zero};
 
 use super::*;
 
@@ -13,22 +13,28 @@ use std::{marker::PhantomData, ops::*};
 /// One can set/access the value by providing a unit compatible with the dimension of the value.
 ///
 /// If the dimension permits it, it implements the following traits:
-/// - [Add]
-/// - [AddAssign]
-/// - [Div]
-/// - [DivAssign]
-/// - [Mul]
-/// - [MulAssign]
-/// - [Neg]
-/// - [Rem]
-/// - [RemAssign]
-/// - [Sub]
-/// - [SubAssign]
-/// 
-/// - [One]
-/// - [Zero]
-/// - [ConstOne]
-/// - [ConstZero]
+/// - from [std::ops]:
+///   - [Add]
+///   - [AddAssign]
+///   - [Div]
+///   - [DivAssign]
+///   - [Mul]
+///   - [MulAssign]
+///   - [Neg]
+///   - [Rem]
+///   - [RemAssign]
+///   - [Sub]
+///   - [SubAssign]
+///
+/// - from [num_traits]:
+///   - [One]
+///   - [Zero]
+///   - [ConstOne]
+///   - [ConstZero]
+///   - [Inv]
+///   - [MulAdd]
+///   - [MulAddAssign]
+///   - [Pow]
 ///
 /// If you want to use a quantity in other operations, you need to implement it yourself.
 ///
@@ -131,7 +137,7 @@ where
 }
 
 /// Adds the other quantity to this quantity.
-/// 
+///
 /// This quantity does NOT change dimension.
 impl<Tl, Dl: Dimension, Tr, Dr: Dimension> AddAssign<Quantity<Tr, Dr>> for Quantity<Tl, Dl>
 where
@@ -157,7 +163,7 @@ where
 }
 
 /// Divides this quantity by the other quantity.
-/// 
+///
 /// This quantity does NOT change dimension.
 impl<Tl, Dl: Dimension, Tr, Dr: Dimension> DivAssign<Quantity<Tr, Dr>> for Quantity<Tl, Dl>
 where
@@ -183,7 +189,7 @@ where
 }
 
 /// Multiplies this quantity to the other quantity.
-/// 
+///
 /// This quantity does NOT change dimension.
 impl<Tl, Dl: Dimension, Tr, Dr: Dimension> MulAssign<Quantity<Tr, Dr>> for Quantity<Tl, Dl>
 where
@@ -222,7 +228,7 @@ where
 }
 
 /// Sets this quantity to the remainder of the division of this quantity by the other quantity.
-/// 
+///
 /// This quantity does NOT change dimension.
 impl<Tl, Dl: Dimension, Tr, Dr: Dimension> RemAssign<Quantity<Tr, Dr>> for Quantity<Tl, Dl>
 where
@@ -248,7 +254,7 @@ where
 }
 
 /// Substracts the other quantity to this quantity.
-/// 
+///
 /// This quantity does NOT change dimension.
 
 impl<Tl, Dl: Dimension, Tr, Dr: Dimension> SubAssign<Quantity<Tr, Dr>> for Quantity<Tl, Dl>
@@ -260,7 +266,6 @@ where
         *self.get_mut_si() -= rhs.get_si()
     }
 }
-
 
 impl<'a, T, D: Dimension> From<&'a Quantity<T, D>> for Quantity<&'a T, D> {
     fn from(value: &'a Quantity<T, D>) -> Quantity<&'a T, D> {
@@ -308,4 +313,52 @@ where
     Quantity<T, D>: Zero,
 {
     const ZERO: Self = Self::from_si(<T as ConstZero>::ZERO);
+}
+
+impl<T, D: Dimension> Inv for Quantity<T, D>
+where
+    T: Inv,
+    D: Inv,
+    <D as Inv>::Output: Dimension,
+{
+    type Output = Quantity<<T as Inv>::Output, <D as Inv>::Output>;
+
+    fn inv(self) -> Self::Output {
+        Self::Output::from_si(self.get_si().inv())
+    }
+}
+
+impl<T, A, B, D: Dimension, DA: Dimension, DB: Dimension> MulAdd<Quantity<A, DA>, Quantity<B, DB>>
+    for Quantity<T, D>
+where
+    T: MulAdd<A, B>,
+    D: MulAdd<DA, DB>,
+    <D as MulAdd<DA, DB>>::Output: Dimension,
+{
+    type Output = Quantity<<T as MulAdd<A, B>>::Output, <D as MulAdd<DA, DB>>::Output>;
+
+    fn mul_add(self, a: Quantity<A, DA>, b: Quantity<B, DB>) -> Self::Output {
+        Self::Output::from_si(self.get_si().mul_add(a.get_si(), b.get_si()))
+    }
+}
+
+impl<T, A, B, D: Dimension, DA: Dimension, DB: Dimension>
+    MulAddAssign<Quantity<A, DA>, Quantity<B, DB>> for Quantity<T, D>
+where
+    T: MulAddAssign<A, B>,
+    D: MulAddAssign<DA, DB>,
+{
+    fn mul_add_assign(&mut self, a: Quantity<A, DA>, b: Quantity<B, DB>) {
+        self.get_mut_si().mul_add_assign(a.get_si(), b.get_si());
+    }
+}
+
+impl<T, D: Dimension, RHS> Pow<RHS> for Quantity<T, D>
+where T: Pow<RHS>, D: Pow<RHS>, <D as Pow<RHS>>::Output: Dimension
+{
+    type Output = Quantity<<T as Pow<RHS>>::Output, <D as Pow<RHS>>::Output>;
+
+    fn pow(self, rhs: RHS) -> Self::Output {
+        Self::Output::from_si(self.get_si().pow(rhs))
+    }
 }

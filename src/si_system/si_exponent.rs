@@ -181,13 +181,13 @@ where
     fn mul_add_assign(&mut self, _a: A, _b: B) {}
 }
 
-impl<E1, E2> Pow<SIExponent<E2>> for SIExponent<E1>
+impl<E1, E2> Pow<E2> for SIExponent<E1>
 where
     E1: Mul<E2>,
 {
     type Output = SIExponent<op!(E1 * E2)>;
 
-    fn pow(self, _rhs: SIExponent<E2>) -> Self::Output {
+    fn pow(self, _rhs: E2) -> Self::Output {
         unreachable!()
     }
 }

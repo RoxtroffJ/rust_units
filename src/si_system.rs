@@ -2,7 +2,7 @@
 //!
 //! Implementation of the SI system and helpers to create other systems that use the same logic.
 //!
-//! A SI-like dimension system is a set of base dimensions. These dimensions are defined and controlled by an exponent, 
+//! A SI-like dimension system is a set of base dimensions. These dimensions are defined and controlled by an exponent,
 //! and are independent from each other.
 //!
 //! With this implementation of the SI system, the type that implement [Dimension](crate::Dimension) is the generic type [SIDimension].
@@ -16,9 +16,9 @@
 //! In the actual SI system, adding two [Quantities](crate::Quantity) together is only possible if the exponents are the same.
 //! Multiplying two [Quantities](crate::Quantity) together is always possible,
 //! and the result's dimension exponents are equal to the sum of the corresponding exponents of the two multiplied quantities.
-//! 
+//!
 //! Here is the list of supported operations:
-//! 
+//!
 //! - From [std::ops]:
 //!   - [Add]
 //!   - [AddAssign]
@@ -36,21 +36,18 @@
 //!   - [MulAdd]
 //!   - [MulAddAssign]
 //!   - [Pow]
-//! 
+//!
 //! Implementing more operations can be done in two ways:
 //! - At the [SIDimension] level (recomended): ```impl<D1, D2> Foo<SIDimension<D2>> for SIDimension<D1> where D1: Foo<D2> {...}```
 //! - At the exponent level.
-//! 
-//! Use the implementation at [SIDimension] level when your operator has the same behaviour regardless of the type of the 
+//!
+//! Use the implementation at [SIDimension] level when your operator has the same behaviour regardless of the type of the
 //! exponents ([SIExponent] or other).
 
-use std::{
-    marker::PhantomData,
-    ops::*,
-};
+use std::{marker::PhantomData, ops::*};
 
 use derive_where::derive_where;
-use extended_typenum::{Sum, U0, U1};
+use extended_typenum::{op, Sum, U0, U1};
 
 /// A SI(-like) dimension.
 ///
@@ -234,7 +231,10 @@ macro_rules! si_add_dim {
 pub mod helpers;
 
 mod macros;
-use crate::{si_impl_bin_op, si_impl_un_op, si_impl_tern_op};
+use crate::{
+    si_impl_bin_op, si_impl_tern_op, si_impl_un_op,
+    si_system::helpers::{SimplH, SimplifyHead},
+};
 
 macro_rules! impl_bin_std_op {
     ($Trait:ident, $fn:ident) => {
@@ -256,7 +256,7 @@ macro_rules! impl_bin_std_op {
 macro_rules! impl_bin_std_assign_op {
     ($Trait:ident, $fn:ident) => {
         si_impl_bin_op! {
-            $Trait => 
+            $Trait =>
             {
                 fn $fn(&mut self, _rhs: Dimensionless) {}
             }
@@ -290,7 +290,7 @@ macro_rules! impl_tern_std_op {
 macro_rules! impl_tern_std_assign_op {
     ($Trait:ident, $fn:ident) => {
         si_impl_tern_op! {
-            $Trait => 
+            $Trait =>
             {
                 fn $fn(&mut self, _rhs1: Dimensionless, _rhs2: Dimensionless) {}
             }
@@ -306,7 +306,7 @@ macro_rules! impl_tern_std_assign_op {
 
 macro_rules! impl_unary_std_op {
     ($Trait:ident, $fn:ident) => {
-        si_impl_un_op!{
+        si_impl_un_op! {
             $Trait => Output
             {
                 [fn $fn(self)] -> Self::Output;
@@ -321,19 +321,50 @@ macro_rules! impl_unary_std_op {
     };
 }
 
-impl_bin_std_op!{Add, add}
-impl_bin_std_assign_op!{AddAssign, add_assign}
-impl_bin_std_op!{Div, div}
-impl_bin_std_assign_op!{DivAssign, div_assign}
-impl_bin_std_op!{Mul, mul}
-impl_bin_std_assign_op!{MulAssign, mul_assign}
-impl_bin_std_op!{Rem, rem}
-impl_bin_std_assign_op!{RemAssign, rem_assign}
-impl_bin_std_op!{Sub, sub}
-impl_bin_std_assign_op!{SubAssign, sub_assign}
-impl_unary_std_op!{Neg, neg}
+impl_bin_std_op! {Add, add}
+impl_bin_std_assign_op! {AddAssign, add_assign}
+impl_bin_std_op! {Div, div}
+impl_bin_std_assign_op! {DivAssign, div_assign}
+impl_bin_std_op! {Mul, mul}
+impl_bin_std_assign_op! {MulAssign, mul_assign}
+impl_bin_std_op! {Rem, rem}
+impl_bin_std_assign_op! {RemAssign, rem_assign}
+impl_bin_std_op! {Sub, sub}
+impl_bin_std_assign_op! {SubAssign, sub_assign}
+impl_unary_std_op! {Neg, neg}
 
-impl_tern_std_op!{MulAdd, mul_add}
-impl_tern_std_assign_op!{MulAddAssign, mul_add_assign}
-impl_bin_std_op!{Pow, pow}
-impl_unary_std_op!{Inv, inv}
+impl_tern_std_op! {MulAdd, mul_add}
+impl_tern_std_assign_op! {MulAddAssign, mul_add_assign}
+impl_unary_std_op! {Inv, inv}
+
+impl<RHS> Pow<RHS> for Dimensionless {
+    type Output = Dimensionless;
+
+    fn pow(self, _rhs: RHS) -> Self::Output {
+        self
+    }
+}
+
+impl<I, O, E, Rest, RHS> Pow<RHS> for SIDim<I, O, E, Rest>
+where
+    E: Mul<RHS>,
+    Rest: Pow<RHS>,
+    SIDim<I, O, op!(E * RHS), <Rest as Pow<RHS>>::Output>: SimplifyHead,
+    SimplH<SIDim<I, O, op!(E * RHS), <Rest as Pow<RHS>>::Output>>: Default,
+{
+    type Output = SimplH<SIDim<I, O, op!(E * RHS), <Rest as Pow<RHS>>::Output>>;
+
+    fn pow(self, _rhs: RHS) -> Self::Output {
+        Self::Output::default()
+    }
+}
+
+impl<D, RHS> Pow<RHS> for SIDimension<D>
+where D: Pow<RHS>
+{
+    type Output = SIDimension<<D as Pow<RHS>>::Output>;
+
+    fn pow(self, _rhs: RHS) -> Self::Output {
+        Self::Output::default()
+    }
+}
