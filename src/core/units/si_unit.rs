@@ -7,7 +7,7 @@ use super::*;
 ///
 /// This is the unit that is used in computations between quantities.
 ///
-/// For example, the [`SIUnit`] of a [`Length`] quantity is the meter. This means that if you define a length
+/// For example, the [`SIUnit`] of a [`Length`](crate::si_system::Length) quantity is the meter. This means that if you define a length
 /// using [`YARD`]s, it will be internally converted to meters, and all computations will be done in meters.
 /// When you retrieve the value of the quantity in [`YARD`]s, it will be converted back from meters to yards.
 ///

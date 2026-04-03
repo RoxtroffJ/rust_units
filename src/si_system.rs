@@ -41,9 +41,12 @@
 //! - TODO: Explain
 
 use std::{marker::PhantomData, ops::*};
-
+use num_traits::{Inv, MulAdd, MulAddAssign, Pow};
 use derive_where::derive_where;
 use extended_typenum::{op, Sum, U0, U1};
+
+mod constants;
+pub use constants::*;
 
 /// A SI(-like) dimension.
 ///
@@ -67,7 +70,6 @@ pub struct SIDimension<D> {
 pub struct Dimensionless;
 
 mod si_exponent;
-use num_traits::{Inv, MulAdd, MulAddAssign, Pow};
 pub use si_exponent::*;
 
 /// A SI(-like) Dimension, used in [`SIDimension`], composed of various exponents associated to base dimensions.
@@ -158,12 +160,18 @@ where
 ///
 /// // Let's create a system with three dimensions: length, time and mass.
 /// si_add_dim!{EmptySILikeSystem =>
-///     (Length, LengthID),
-///     (Time, TimeID),
+///     (pub Length, LengthID), // Undocumented
+///     (
+///         /// Comment for Time (optionnal)
+///         pub Time, 
+///         /// Comment for TimeID (optionnal)
+///         pub(crate) TimeID),
 ///     (MassSquared, MassID, SIExponent<CrossInt<P2>>) // Here we create Mass^2 instead of just Mass, because why not!
 ///                                           // Don't forget the SIExponent or you will have surprising behavior!
 ///                                           // (exponent behaving like number instead of power of number)
-/// = MySILikeSystem}
+/// = 
+///     /// Comment for MySILikeSystem (optionnal)
+///     pub MySILikeSystem}
 ///
 /// // Now we have access to the three dimensions. They were defined with their respective ID for differenciation.
 /// // Furthermore, we have access to the new system, in case we want to add even more dimensions to it.
@@ -194,14 +202,17 @@ macro_rules! si_add_dim {
     ($System:ty => $(,)? ) => {};
 
     // Base case: no more dimension to add, just return the new system.
-    ($System:ty => $(,)? = $NewSystem:ident ) => {
-        type $NewSystem = $System;
+    ($System:ty => $(,)? = $(#[$meta:meta])* $sysvis:vis $NewSystem:ident ) => {
+        $(#[$meta])*
+        $sysvis type $NewSystem = $System;
     };
 
     // Add a single dimension and continue with the rest.
-    ($System:ty => ($Dim:ident, $DimID:ident, $Exp:ty), $($rest:tt)*) => {
-        struct $DimID;
-        type $Dim = $crate::si_system::SIDimension<$crate::si_system::SIDim<
+    ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident, $Exp:ty), $($rest:tt)*) => {
+        $(#[$meta_id])*
+        $vis_id struct $DimID;
+        $(#[$meta])*
+        $vis type $Dim = $crate::si_system::SIDimension<$crate::si_system::SIDim<
             $DimID,
             <$System as $crate::si_system::AddDim>::NewOrder,
             $Exp,
@@ -211,16 +222,16 @@ macro_rules! si_add_dim {
         $crate::si_add_dim!(<$System as $crate::si_system::AddDim>::NewDimSystem => $($rest)*);
     };
     // Same as previous one, but with exponent ommited.
-    ($System:ty => ($Dim:ident, $DimID:ident), $($rest:tt)*) => {
-        $crate::si_add_dim!($System => ($Dim, $DimID, $crate::si_system::SIExponent<extended_typenum::CrossInt<extended_typenum::P1>>), $($rest)*)
+    ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident), $($rest:tt)*) => {
+        $crate::si_add_dim!($System => ($(#[$meta])* $vis $Dim, $(#[$meta_id])* $vis_id $DimID, $crate::si_system::SIExponent<extended_typenum::CrossInt<extended_typenum::P1>>), $($rest)*);
     };
 
     // Same as above, without trailing comma.
-    ($System:ty => ($Dim:ident, $DimID:ident) $($rest:tt)*) => {
-        $crate::si_add_dim!($System => ($Dim, $DimID), $($rest)*);
+    ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident) $($rest:tt)*) => {
+        $crate::si_add_dim!($System => ($(#[$meta])* $vis $Dim, $(#[$meta_id])* $vis_id $DimID), $($rest)*);
     };
-    ($System:ty => ($Dim:ident, $DimID:ident, $Exp:ty) $($rest:tt)*) => {
-        $crate::si_add_dim!($System => ($Dim, $DimID, $Exp), $($rest)*);
+    ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident, $Exp:ty) $($rest:tt)*) => {
+        $crate::si_add_dim!($System => ($(#[$meta])* $vis $Dim, $(#[$meta_id])* $vis_id $DimID, $Exp), $($rest)*);
     };
 }
 
