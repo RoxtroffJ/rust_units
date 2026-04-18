@@ -322,7 +322,7 @@ si_add_dim! {
         /// By using such a dimension, you enforce it is no longer compatible with unitless numbers.
         pub Angle, 
         /// ID for `Angle`. Used internally in [`SIDim`](crate::si_system::SIDim).
-        pub AngleID
+        pub AngleID ; "rad"
     ),
     (
         /// [`Dimension`](crate::Dimension) for a solid angle as part of extension of the SI System.
@@ -330,7 +330,7 @@ si_add_dim! {
         /// By using such a dimension, you enforce it is no longer compatible with unitless numbers.
         pub SolidAngle,
         /// ID for `SolidAngle`. Used internally in [`SIDim`](crate::si_system::SIDim).
-        pub SolidAngleID
+        pub SolidAngleID ; "sr"
     )
     =
         /// The  [`SISystem`] with dimensions for angles.
