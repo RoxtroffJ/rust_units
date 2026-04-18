@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::ops::*;
 
-use extended_typenum::{op, GetZero, IsNull, IsZero, ZeroOf};
+use extended_typenum::{op, Bit, GetZero, IsEqual, IsNull, IsZero, TypeDisplay, ZeroOf, P1};
 use num_traits::{Inv, MulAdd, MulAddAssign, Pow};
 
 /// The exponent of a dimension in the SI system.
@@ -189,5 +189,19 @@ where
 
     fn pow(self, _rhs: E2) -> Self::Output {
         unreachable!()
+    }
+}
+
+impl<E: TypeDisplay> TypeDisplay for SIExponent<E>
+where
+    E: IsEqual<P1>,
+    <E as IsEqual<P1>>::Output: Bit,
+{
+    fn fmt(f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if <<E as IsEqual<P1>>::Output as Bit>::BOOL {
+            return write!(f, "");
+        }
+        write!(f, "^")?;
+        E::fmt(f)
     }
 }

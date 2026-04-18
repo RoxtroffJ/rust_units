@@ -1,11 +1,12 @@
 //! Struct quantity and it's generic implementations
 
 use derive_where::derive_where;
+use extended_typenum::TypeDisplay;
 use num_traits::{ConstOne, ConstZero, Inv, MulAdd, MulAddAssign, One, Pow, Zero};
 
 use super::*;
 
-use std::{marker::PhantomData, ops::*};
+use std::{fmt::Display, marker::PhantomData, ops::*};
 
 /// Dimensioned value.
 ///
@@ -360,5 +361,15 @@ where T: Pow<RHS>, D: Pow<RHS>, <D as Pow<RHS>>::Output: Dimension
 
     fn pow(self, rhs: RHS) -> Self::Output {
         Self::Output::from_si(self.get_si().pow(rhs))
+    }
+}
+
+impl<T, D: Dimension> Display for Quantity<T, D> 
+where T: Display, D: TypeDisplay
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.value.fmt(f)?;
+        write!(f, " ")?;
+        D::fmt(f)
     }
 }

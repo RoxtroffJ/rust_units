@@ -36,14 +36,16 @@
 //!   - [`MulAdd`]
 //!   - [`MulAddAssign`]
 //!   - [`Pow`]
+//! - From [`extended_typenum`]
+//!   - [`Pow`]
 //!
 //! Implementing more operations can be done in two ways:
 //! - TODO: Explain
 
-use std::{marker::PhantomData, ops::*};
-use num_traits::{Inv, MulAdd, MulAddAssign, Pow};
 use derive_where::derive_where;
-use extended_typenum::{op, Sum, U0, U1};
+use extended_typenum::{Sum, TypeDisplay, U0, U1, op};
+use num_traits::{Inv, MulAdd, MulAddAssign, Pow};
+use std::{marker::PhantomData, ops::*};
 
 mod constants;
 pub use constants::*;
@@ -163,13 +165,16 @@ where
 ///     (pub Length, LengthID), // Undocumented
 ///     (
 ///         /// Comment for Time (optionnal)
-///         pub Time, 
+///         pub Time,
 ///         /// Comment for TimeID (optionnal)
-///         pub(crate) TimeID),
-///     (MassSquared, MassID, SIExponent<CrossInt<P2>>) // Here we create Mass^2 instead of just Mass, because why not!
+///         pub(crate) TimeID
+///         ; "s" // after a ; you can define symbol for this dimension for prints (optionnal, do not place the ; if nothing behind it). 
+///               // This enable the implementation of Display for a Quantity involving this dimension. 
+///     ),
+///     (MassSquared, MassID, SIExponent<CrossInt<P2>> ; "kg") // Here we create Mass^2 instead of just Mass, because why not!
 ///                                           // Don't forget the SIExponent or you will have surprising behavior!
 ///                                           // (exponent behaving like number instead of power of number)
-/// = 
+/// =
 ///     /// Comment for MySILikeSystem (optionnal)
 ///     pub MySILikeSystem}
 ///
@@ -183,6 +188,9 @@ where
 ///
 /// let speed: Quantity<_,op!{Length/Time}> = m/s;
 /// // let sum = m + s; // Does not compile, which is good :)
+/// 
+/// let something = Quantity::<_, MassSquared>::from_si(3528.) / s / s;
+/// assert_eq!(format!("{something}"), "2 s^-2.kg^2")
 /// ```
 ///
 /// NOTE: if you do something like this:
@@ -208,7 +216,7 @@ macro_rules! si_add_dim {
     };
 
     // Add a single dimension and continue with the rest.
-    ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident, $Exp:ty), $($rest:tt)*) => {
+    ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident, $Exp:ty $(;$str:expr)?), $($rest:tt)*) => {
         $(#[$meta_id])*
         $vis_id struct $DimID;
         $(#[$meta])*
@@ -218,20 +226,24 @@ macro_rules! si_add_dim {
             $Exp,
             $crate::si_system::Dimensionless
         >>;
-
+        $(impl extended_typenum::TypeDisplay for $DimID {
+            fn fmt(f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, $str)
+            }
+        })?
         $crate::si_add_dim!(<$System as $crate::si_system::AddDim>::NewDimSystem => $($rest)*);
     };
     // Same as previous one, but with exponent ommited.
-    ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident), $($rest:tt)*) => {
-        $crate::si_add_dim!($System => ($(#[$meta])* $vis $Dim, $(#[$meta_id])* $vis_id $DimID, $crate::si_system::SIExponent<extended_typenum::CrossInt<extended_typenum::P1>>), $($rest)*);
+    ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident $(;$str:expr)?), $($rest:tt)*) => {
+        $crate::si_add_dim!($System => ($(#[$meta])* $vis $Dim, $(#[$meta_id])* $vis_id $DimID, $crate::si_system::SIExponent<extended_typenum::CrossInt<extended_typenum::P1>> $(;$str)?), $($rest)*);
     };
 
     // Same as above, without trailing comma.
-    ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident) $($rest:tt)*) => {
-        $crate::si_add_dim!($System => ($(#[$meta])* $vis $Dim, $(#[$meta_id])* $vis_id $DimID), $($rest)*);
+    ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident $(;$str:expr)?) $($rest:tt)*) => {
+        $crate::si_add_dim!($System => ($(#[$meta])* $vis $Dim, $(#[$meta_id])* $vis_id $DimID $(;$str)?), $($rest)*);
     };
-    ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident, $Exp:ty) $($rest:tt)*) => {
-        $crate::si_add_dim!($System => ($(#[$meta])* $vis $Dim, $(#[$meta_id])* $vis_id $DimID, $Exp), $($rest)*);
+    ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident, $Exp:ty $(;$str:expr)?) $($rest:tt)*) => {
+        $crate::si_add_dim!($System => ($(#[$meta])* $vis $Dim, $(#[$meta_id])* $vis_id $DimID, $Exp $(;$str)?), $($rest)*);
     };
 }
 
@@ -367,11 +379,65 @@ where
 }
 
 impl<D, RHS> Pow<RHS> for SIDimension<D>
-where D: Pow<RHS>
+where
+    D: Pow<RHS>,
 {
     type Output = SIDimension<<D as Pow<RHS>>::Output>;
 
     fn pow(self, _rhs: RHS) -> Self::Output {
         Self::Output::default()
+    }
+}
+
+impl<D, RHS> extended_typenum::Pow<RHS> for SIDimension<D>
+where
+    SIDimension<D>: Pow<RHS>,
+{
+    type Output = <SIDimension<D> as Pow<RHS>>::Output;
+
+    fn powi(self, exp: RHS) -> Self::Output {
+        self.pow(exp)
+    }
+}
+
+
+
+impl<D> TypeDisplay for SIDimension<D>
+where
+    D: TypeDisplay,
+{
+    fn fmt(f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        D::fmt(f)
+    }
+}
+
+impl TypeDisplay for Dimensionless {
+    fn fmt(f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "")
+    }
+}
+
+impl<I, O, E> TypeDisplay for SIDim<I, O, E, Dimensionless>
+where
+    I: TypeDisplay,
+    E: TypeDisplay,
+{
+    fn fmt(f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        I::fmt(f)?;
+        E::fmt(f)
+    }
+}
+
+impl<I, O, E, I2, O2, E2, Rest2> TypeDisplay for SIDim<I, O, E, SIDim<I2, O2, E2, Rest2>>
+where
+    I: TypeDisplay,
+    E: TypeDisplay,
+    SIDim<I2, O2, E2, Rest2>: TypeDisplay
+{
+    fn fmt(f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        I::fmt(f)?;
+        E::fmt(f)?;
+        write!(f, ".")?;
+        SIDim::<I2, O2, E2, Rest2>::fmt(f)
     }
 }

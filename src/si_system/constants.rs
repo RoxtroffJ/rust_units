@@ -11,43 +11,43 @@ si_add_dim! {
             /// [`Dimension`](crate::Dimension) for time (duration) in the SI system.
             pub Time,
             /// ID for `Time`. Used internally in [`SIDim`](crate::si_system::SIDim).
-            pub TimeID
+            pub TimeID ; "s"
         ),
         (
             /// [`Dimension`](crate::Dimension) for length (distance) in the SI system.
             pub Length,
             /// ID for `Length`. Used internally in [`SIDim`](crate::si_system::SIDim).
-            pub LengthID
+            pub LengthID ; "m"
         ),
         (
             /// [`Dimension`](crate::Dimension) for mass in the SI system.
             pub Mass,
             /// ID for `Mass`. Used internally in [`SIDim`](crate::si_system::SIDim).
-            pub MassID
+            pub MassID ; "kg"
         ),
         (
             /// [`Dimension`](crate::Dimension) for electric current in the SI system.
             pub Current,
             /// ID for `Current`. Used internally in [`SIDim`](crate::si_system::SIDim).
-            pub CurrentID
+            pub CurrentID ; "A"
         ),
         (
             /// [`Dimension`](crate::Dimension) for temperature in the SI system.
             pub Temperature,
             /// ID for `Temperature`. Used internally in [`SIDim`](crate::si_system::SIDim).
-            pub TemperatureID
+            pub TemperatureID ; "K"
         ),
         (
             /// [`Dimension`](crate::Dimension) for amount of substance in the SI system.
             pub Substance,
             /// ID for `Substance`. Used internally in [`SIDim`](crate::si_system::SIDim).
-            pub SubstanceID
+            pub SubstanceID ; "mol"
         ),
         (
             /// [`Dimension`](crate::Dimension) for luminous intensity in the SI system.
             pub LightIntensity,
             /// ID for `LightIntensity`. Used internally in [`SIDim`](crate::si_system::SIDim).
-            pub LightIntensityID
+            pub LightIntensityID ; "cd"
         )
 
      =
@@ -61,11 +61,6 @@ pub type SIDimensionless = SIDimension<Dimensionless>;
 // --- Generic ---
 /// [`Dimension`](crate::Dimension) for frequency (`1/`[`Time`]) in the [`SISystem`].
 pub type Frequency = op!(SIDimensionless / Time);
-
-/// [`Dimension`](crate::Dimension) for an angle ([`Length`]/[`Length`] = 1).
-pub type Angle = op!(Length / Length);
-/// [`Dimension`](crate::Dimension) for a solid angle ([`Length`]²/[`Length`]² = 1).
-pub type SolidAngle = op!(Length * Length / Length / Length);
 
 /// [`Dimension`](crate::Dimension) for force/weight ([`Mass`]⋅[`Length`]/[`Time`]² = [`Mass`]⋅[`Length`]⋅[`Time`]⁻²).
 pub type Force = op!(Mass * Length / Time / Time);
@@ -113,10 +108,6 @@ pub type Permeance = Inductance;
 pub type MagneticFluxDensity = op!(Force / (Current * Length));
 /// [`Dimension`](crate::Dimension) for magnetic flux ([`Voltage`]⋅[`Time`], [`MagneticFluxDensity`]⋅[`Length`]², [`Energy`]/[`Current`] = [`Mass`]⋅[`Length`]²⋅[`Time`]⁻²⋅[`Current`]⁻¹).
 pub type MagneticFlux = op!(Voltage * Time);
-/// [`Dimension`](crate::Dimension) for luminous flux ([`LightIntensity`]⋅[`SolidAngle`] = [`LightIntensity`]).
-pub type LuminousFlux = op!(LightIntensity * SolidAngle);
-/// [`Dimension`](crate::Dimension) for illuminance ([`LuminousFlux`]/[`Length`]² = [`LightIntensity`]⋅[`Length`]⁻²).
-pub type Illuminance = op!(LuminousFlux / Length / Length);
 /// [`Dimension`](crate::Dimension) for radioactivity (decays per unit time) (1/[`Time`] = [`Time`]⁻¹).
 pub type Radioactivity = op!(SIDimensionless / Time);
 /// [`Dimension`](crate::Dimension) for an absorbed dose (of ionizing radiation) ([`Energy`]/[`Mass`] = [`Length`]²⋅[`Time`]⁻²).
@@ -142,10 +133,6 @@ pub type Jolt = Jerk;
 pub type Snap = op!(Length / Time / Time / Time / Time);
 /// Same as [`Snap`]
 pub type Jounce = Snap;
-/// [`Dimension`](crate::Dimension) for angular velocity ([`Angle`]/[`Time`] = [`Time`]⁻¹).
-pub type AngularVelocity = op!(Angle / Time);
-/// [`Dimension`](crate::Dimension) for angular acceleration ([`Angle`]/[`Time`]² = [`Time`]⁻²).
-pub type AngularAcceleration = op!(Angle / Time / Time);
 /// [`Dimension`](crate::Dimension) for frequency drift ([`Frequency`]/[`Time`] = [`Time`]⁻²).
 pub type FrequencyDrift = op!(Frequency / Time);
 /// [`Dimension`](crate::Dimension) for volumetric flow ([`Length`]³/[`Time`] = [`Length`]³⋅[`Time`]⁻¹).
@@ -209,8 +196,6 @@ pub type DynamicViscosity = op!(Pressure * Time);
 pub type LinearMassDensity = op!(Mass / Length);
 /// [`Dimension`](crate::Dimension) for mass flow rate ([`Mass`]/[`Time`] = [`Mass`]⋅[`Time`]⁻¹).
 pub type MassFlowRate = op!(Mass / Time);
-/// [`Dimension`](crate::Dimension) for radiance ([`Power`]/[`SolidAngle`]/[`Length`]² = [`Mass`]⋅[`Time`]⁻³).
-pub type Radiance = op!(Power / (SolidAngle * Length * Length));
 /// [`Dimension`](crate::Dimension) for spectral power ([`Power`]/[`Length`] = [`Length`]⋅[`Mass`]⋅[`Time`]⁻³).
 pub type SpectralPower = op!(Power / Length);
 /// [`Dimension`](crate::Dimension) for absorbed dose rate (Gy/[`Time`] = [`Length`]²⋅[`Time`]⁻³).
@@ -231,10 +216,6 @@ pub type RadiantExposure = op!(Energy / Length / Length);
 pub type MomentOfInertia = op!(Mass * Length * Length);
 /// [`Dimension`](crate::Dimension) for specific angular momentum ([`Force`]⋅[`Length`]⋅[`Time`]/[`Mass`] = [`Length`]²⋅[`Time`]⁻¹).
 pub type SpecificAngularMomentum = op!(Force * Length * Time / Mass);
-/// [`Dimension`](crate::Dimension) for radiant intensity ([`Power`]/[`SolidAngle`] = [`Length`]²⋅[`Mass`]⋅[`Time`]⁻³).
-pub type RadiantIntensity = op!(Power / SolidAngle);
-/// [`Dimension`](crate::Dimension) for spectral intensity ([`Power`]/[`SolidAngle`]/[`Length`] = [`Length`]⋅[`Mass`]⋅[`Time`]⁻³).
-pub type SpectralIntensity = op!(Power / (SolidAngle * Length));
 
 // --- Chemistry ---
 
@@ -308,17 +289,6 @@ pub type ElectronMobility = op!(Length * Length / (Voltage * Time));
 /// [`Dimension`](crate::Dimension) for exposure (X and gamma rays) ([`ElectricCharge`]/[`Mass`] = [`Mass`]⁻¹⋅[`Time`]⋅[`Current`]).
 pub type Exposure = op!(ElectricCharge / Mass);
 
-// --- Photometry ---
-
-/// [`Dimension`](crate::Dimension) for luminous energy ([`LuminousFlux`]⋅[`Time`] = [`Time`]⋅[`LightIntensity`]).
-pub type LuminousEnergy = op!(LuminousFlux * Time);
-/// [`Dimension`](crate::Dimension) for luminous exposure ([`Illuminance`]⋅[`Time`] = [`Length`]⁻²⋅[`Time`]⋅[`LightIntensity`]).
-pub type LuminousExposure = op!(Illuminance * Time);
-/// [`Dimension`](crate::Dimension) for luminance ([`LightIntensity`]/[`Length`]² = [`Length`]⁻²⋅[`LightIntensity`]).
-pub type Luminance = op!(LightIntensity / Length / Length);
-/// [`Dimension`](crate::Dimension) for luminous efficacy ([`LuminousFlux`]/[`Power`] = [`Length`]⁻²⋅[`Mass`]⁻¹⋅[`Time`]³⋅[`LightIntensity`]).
-pub type LuminousEfficacy = op!(LuminousFlux / Power);
-
 // --- Thermodynamics ---
 
 /// [`Dimension`](crate::Dimension) for heat capacity or entropy ([`Energy`]/[`Temperature`] = [`Length`]²⋅[`Mass`]⋅[`Time`]⁻²⋅[`Temperature`]⁻¹).
@@ -337,3 +307,58 @@ pub type ThermalResistance = op!(Temperature / Power);
 pub type ThermalExpansionCoefficient = op!(SIDimensionless / Temperature);
 /// [`Dimension`](crate::Dimension) for temperature gradient ([`Temperature`]/[`Length`] = [`Length`]⁻¹⋅[`Temperature`]).
 pub type TemperatureGradient = op!(Temperature / Length);
+
+// --- Photometry ---
+/// [`Dimension`](crate::Dimension) for luminance ([`LightIntensity`]/[`Length`]² = [`Length`]⁻²⋅[`LightIntensity`]).
+pub type Luminance = op!(LightIntensity / Length / Length);
+
+// --- Angle extension ---
+
+si_add_dim! {
+    SISystem => 
+    (
+        /// [`Dimension`](crate::Dimension) for an angle as part of extension of the SI System.
+        /// 
+        /// By using such a dimension, you enforce it is no longer compatible with unitless numbers.
+        pub Angle, 
+        /// ID for `Angle`. Used internally in [`SIDim`](crate::si_system::SIDim).
+        pub AngleID
+    ),
+    (
+        /// [`Dimension`](crate::Dimension) for a solid angle as part of extension of the SI System.
+        /// 
+        /// By using such a dimension, you enforce it is no longer compatible with unitless numbers.
+        pub SolidAngle,
+        /// ID for `SolidAngle`. Used internally in [`SIDim`](crate::si_system::SIDim).
+        pub SolidAngleID
+    )
+    =
+        /// The  [`SISystem`] with dimensions for angles.
+        pub SISystemWithAngles
+}
+
+
+/// [`Dimension`](crate::Dimension) for angular velocity ([`Angle`]/[`Time`]).
+pub type AngularVelocity = op!(Angle / Time);
+/// [`Dimension`](crate::Dimension) for angular acceleration ([`Angle`]/[`Time`]²).
+pub type AngularAcceleration = op!(Angle / Time / Time);
+
+/// [`Dimension`](crate::Dimension) for luminous flux ([`LightIntensity`]⋅[`SolidAngle`]).
+pub type LuminousFlux = op!(LightIntensity * SolidAngle);
+/// [`Dimension`](crate::Dimension) for illuminance ([`LuminousFlux`]/[`Length`]² = [`LightIntensity`]⋅[`SolidAngle`]⋅[`Length`]⁻²).
+pub type Illuminance = op!(LuminousFlux / Length / Length);
+
+/// [`Dimension`](crate::Dimension) for radiance ([`Power`]/[`SolidAngle`]/[`Length`]² = [`Mass`]⋅[`SolidAngle`]⋅[`Time`]⁻³).
+pub type Radiance = op!(Power / (SolidAngle * Length * Length));
+
+/// [`Dimension`](crate::Dimension) for radiant intensity ([`Power`]/[`SolidAngle`] = [`Length`]²⋅[`Mass`]⋅[`Time`]⁻³⋅[`SolidAngle`]⁻¹).
+pub type RadiantIntensity = op!(Power / SolidAngle);
+/// [`Dimension`](crate::Dimension) for spectral intensity ([`Power`]/[`SolidAngle`]/[`Length`] = [`Length`]⋅[`Mass`]⋅[`Time`]⁻³⋅[`SolidAngle`]⁻¹).
+pub type SpectralIntensity = op!(Power / (SolidAngle * Length));
+
+/// [`Dimension`](crate::Dimension) for luminous energy ([`LuminousFlux`]⋅[`Time`] = [`Time`]⋅[`LightIntensity`]⋅[`SolidAngle`]).
+pub type LuminousEnergy = op!(LuminousFlux * Time);
+/// [`Dimension`](crate::Dimension) for luminous exposure ([`Illuminance`]⋅[`Time`] = [`Length`]⁻²⋅[`Time`]⋅[`LightIntensity`]⋅[`SolidAngle`]).
+pub type LuminousExposure = op!(Illuminance * Time);
+/// [`Dimension`](crate::Dimension) for luminous efficacy ([`LuminousFlux`]/[`Power`] = [`Length`]⁻²⋅[`Mass`]⁻¹⋅[`Time`]³⋅[`LightIntensity`]⋅[`SolidAngle`]).
+pub type LuminousEfficacy = op!(LuminousFlux / Power);
