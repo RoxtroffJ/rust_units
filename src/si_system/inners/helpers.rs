@@ -1,4 +1,5 @@
 //! A series of traits and structs required to make the SI system work.
+//! They do not directly appear in the definitions of the types and traits you deal with when using the si system.
 //! 
 //! In this modules, when we say "dimension", we mean the content of [`SIDimension`].
 //!
@@ -7,13 +8,10 @@
 use std::ops::BitAnd;
 
 use extended_typenum::{
-    type_operators_extended::IsZero, And, Cmp, Equal, False, GetZero, Greater, If, IsNull, Less,
-    True, TypeIf, UInt, ZeroOf,
+    And, Cmp, Equal, False, GetZero, Greater, If, IsNull, Less, True, TypeIf, U0, UInt, ZeroOf, type_operators_extended::IsZero
 };
 
-use crate::{si_system::helpers::common_heads_helpers::CompHeads, Dimension};
-
-use super::*;
+use crate::{Dimension, si_system::{SIDimension, inners::{Dimensionless, SIDim, helpers::common_heads_helpers::CompHeads}}};
 
 // ----------------------------------------------
 // Get dimension
@@ -239,6 +237,8 @@ pub type ComD2<D1, D2> = <D1 as CommonHeads<D2>>::Other;
 
 pub mod common_heads_helpers {
     //! Helper struct and trait for implementation of [`CommonHeads`].
+    use std::marker::PhantomData;
+
     use extended_typenum::Compare;
 
     use super::*;

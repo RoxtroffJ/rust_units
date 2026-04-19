@@ -1,4 +1,4 @@
-use rust_units::{Quantity, si_system::*};
+use rust_units::{Quantity, si_system::dimensions::*};
 
 fn main() {
     let m: Quantity<_, Mass> = Quantity::from_si(42.);

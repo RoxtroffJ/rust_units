@@ -1,8 +1,10 @@
+//! SI Dimension system and ususal composite dimensions.
+
 use extended_typenum::op;
 
 use crate::{
     si_add_dim,
-    si_system::{Dimensionless, EmptySILikeSystem, SIDimension},
+    si_system::{SIDimensionless, EmptySILikeSystem},
 };
 
 si_add_dim! {
@@ -10,43 +12,43 @@ si_add_dim! {
         (
             /// [`Dimension`](crate::Dimension) for time (duration) in the SI system.
             pub Time,
-            /// ID for `Time`. Used internally in [`SIDim`](crate::si_system::SIDim).
+            /// ID for `Time`. Used internally in [`inners::SIDim`](crate::si_system::inners::SIDim).
             pub TimeID ; "s"
         ),
         (
             /// [`Dimension`](crate::Dimension) for length (distance) in the SI system.
             pub Length,
-            /// ID for `Length`. Used internally in [`SIDim`](crate::si_system::SIDim).
+            /// ID for `Length`. Used internally in [`inners::SIDim`](crate::si_system::inners::SIDim).
             pub LengthID ; "m"
         ),
         (
             /// [`Dimension`](crate::Dimension) for mass in the SI system.
             pub Mass,
-            /// ID for `Mass`. Used internally in [`SIDim`](crate::si_system::SIDim).
+            /// ID for `Mass`. Used internally in [`inners::SIDim`](crate::si_system::inners::SIDim).
             pub MassID ; "kg"
         ),
         (
             /// [`Dimension`](crate::Dimension) for electric current in the SI system.
             pub Current,
-            /// ID for `Current`. Used internally in [`SIDim`](crate::si_system::SIDim).
+            /// ID for `Current`. Used internally in [`inners::SIDim`](crate::si_system::inners::SIDim).
             pub CurrentID ; "A"
         ),
         (
             /// [`Dimension`](crate::Dimension) for temperature in the SI system.
             pub Temperature,
-            /// ID for `Temperature`. Used internally in [`SIDim`](crate::si_system::SIDim).
+            /// ID for `Temperature`. Used internally in [`inners::SIDim`](crate::si_system::inners::SIDim).
             pub TemperatureID ; "K"
         ),
         (
             /// [`Dimension`](crate::Dimension) for amount of substance in the SI system.
             pub Substance,
-            /// ID for `Substance`. Used internally in [`SIDim`](crate::si_system::SIDim).
+            /// ID for `Substance`. Used internally in [`inners::SIDim`](crate::si_system::inners::SIDim).
             pub SubstanceID ; "mol"
         ),
         (
             /// [`Dimension`](crate::Dimension) for luminous intensity in the SI system.
             pub LightIntensity,
-            /// ID for `LightIntensity`. Used internally in [`SIDim`](crate::si_system::SIDim).
+            /// ID for `LightIntensity`. Used internally in [`inners::SIDim`](crate::si_system::inners::SIDim).
             pub LightIntensityID ; "cd"
         )
 
@@ -54,9 +56,6 @@ si_add_dim! {
         /// The official SI system ([`SIDimSystem`](crate::si_system::SIDimSystem)).
         pub SISystem
 }
-
-/// Dimensionless dimension, compatible with all [`SIDimSystem`](super::SIDimSystem)s.
-pub type SIDimensionless = SIDimension<Dimensionless>;
 
 // --- Generic ---
 /// [`Dimension`](crate::Dimension) for frequency (`1/`[`Time`]) in the [`SISystem`].
@@ -321,7 +320,7 @@ si_add_dim! {
         /// 
         /// By using such a dimension, you enforce it is no longer compatible with unitless numbers.
         pub Angle, 
-        /// ID for `Angle`. Used internally in [`SIDim`](crate::si_system::SIDim).
+        /// ID for `Angle`. Used internally in [`inners::SIDim`](crate::si_system::inners::SIDim).
         pub AngleID ; "rad"
     ),
     (
@@ -329,7 +328,7 @@ si_add_dim! {
         /// 
         /// By using such a dimension, you enforce it is no longer compatible with unitless numbers.
         pub SolidAngle,
-        /// ID for `SolidAngle`. Used internally in [`SIDim`](crate::si_system::SIDim).
+        /// ID for `SolidAngle`. Used internally in [`inners::SIDim`](crate::si_system::inners::SIDim).
         pub SolidAngleID ; "sr"
     )
     =
