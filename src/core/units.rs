@@ -1,5 +1,5 @@
 //! The [`Unit`] trait and generic implementations.
-//! 
+//!
 //! Units are typed objects that implement the [`Unit`] trait.
 //! They are not types, but values, so we can operate on them at runtime, create them, store them, ...
 
@@ -15,13 +15,12 @@ pub use si_unit::*;
 use super::*;
 
 /// Trait used to define a unit.
-/// 
+///
 /// It must provide a [`new`](Unit::new) and [`get`](Unit::get) method to respectively
-/// create and retrieve a [`Quantity`] of the unit. 
-/// 
+/// create and retrieve a [`Quantity`] of the unit.
+///
 /// The type of the quantity is defined by the generic parameter ```T```.
 pub trait Unit<T> {
-    
     /// The dimension of the unit.
     type Dimension: Dimension;
 

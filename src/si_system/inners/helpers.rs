@@ -1,6 +1,6 @@
 //! A series of traits and structs required to make the SI system work.
 //! They do not directly appear in the definitions of the types and traits you deal with when using the si system.
-//! 
+//!
 //! In this modules, when we say "dimension", we mean the content of [`SIDimension`].
 //!
 //! It is not recommended to implement these traits and use these structs directly unless you know what you are doing.
@@ -8,17 +8,24 @@
 use std::ops::BitAnd;
 
 use extended_typenum::{
-    And, Cmp, Equal, False, GetZero, Greater, If, IsNull, Less, True, TypeIf, U0, UInt, ZeroOf, type_operators_extended::IsZero
+    type_operators_extended::IsZero, And, Cmp, Equal, False, GetZero, Greater, If, IsNull, Less,
+    True, TypeIf, UInt, ZeroOf, U0,
 };
 
-use crate::{Dimension, si_system::{SIDimension, inners::{Dimensionless, SIDim, helpers::common_heads_helpers::CompHeads}}};
+use crate::{
+    si_system::{
+        inners::{helpers::common_heads_helpers::CompHeads, Dimensionless, SIDim},
+        SIDimension,
+    },
+    Dimension,
+};
 
 // ----------------------------------------------
 // Get dimension
 // ----------------------------------------------
 
 /// Returns the dimension of a [`SIDimension`].
-/// 
+///
 /// This is only meant to be implemented by [`SIDimension`].
 pub trait GetDimension {
     /// The dimension of the implementor [`SIDimension`].
@@ -160,13 +167,13 @@ impl<U, B> Cmp<UInt<U, B>> for OrderDimensionless {
 // Get ID
 // ----------------------------------------------
 
-/// Gets the identifyer of the implementor dimension.
+/// Gets the identifier of the implementor dimension.
 pub trait Ident {
-    /// The identifyer
+    /// The identifier
     type Output;
 }
 
-/// Gets the identifyer of the given dimension.
+/// Gets the identifier of the given dimension.
 pub type I<D> = <D as Ident>::Output;
 
 impl<I, O, E, Rest> Ident for SIDim<I, O, E, Rest> {
@@ -222,7 +229,7 @@ impl<D: Valid> Dimension for SIDimension<D> {}
 // ----------------------------------------------
 
 /// Makes both heads have the same base dimension,
-/// by adding dimension with exponenent zero if that is not already the case.
+/// by adding dimension with exponent zero if that is not already the case.
 pub trait CommonHeads<Other> {
     /// Updated implementor dimension
     type This;
@@ -243,7 +250,7 @@ pub mod common_heads_helpers {
 
     use super::*;
 
-    /// Type containing two dimensions and comparaison of the order of their head.
+    /// Type containing two dimensions and comparison of the order of their head.
     pub struct CompareHeads<D1, D2, C> {
         d1: PhantomData<D1>,
         d2: PhantomData<D2>,

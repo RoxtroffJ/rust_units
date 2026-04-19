@@ -1,10 +1,10 @@
-//! SI Dimension system and ususal composite dimensions.
+//! SI Dimension system and usual composite dimensions.
 
 use extended_typenum::op;
 
 use crate::{
     si_add_dim,
-    si_system::{SIDimensionless, EmptySILikeSystem},
+    si_system::{EmptySILikeSystem, SIDimensionless},
 };
 
 si_add_dim! {
@@ -155,7 +155,7 @@ pub type Torque = op!(Force * Length);
 pub type MomentOfForce = Torque;
 /// [`Dimension`](crate::Dimension) for yank ([`Force`]/[`Time`] = [`Length`]⋅[`Mass`]⋅[`Time`]⁻³).
 pub type Yank = op!(Force / Time);
-/// [`Dimension`](crate::Dimension) for wavenumber, optical power, curvature, or spatial frequency ([`Length`]⁻¹ = [`Length`]⁻¹).
+/// [`Dimension`](crate::Dimension) for wave number, optical power, curvature, or spatial frequency ([`Length`]⁻¹ = [`Length`]⁻¹).
 pub type WaveNumber = op!(SIDimensionless / Length);
 /// Same as [`WaveNumber`]
 pub type OpticalPower = WaveNumber;
@@ -314,18 +314,18 @@ pub type Luminance = op!(LightIntensity / Length / Length);
 // --- Angle extension ---
 
 si_add_dim! {
-    SISystem => 
+    SISystem =>
     (
         /// [`Dimension`](crate::Dimension) for an angle as part of extension of the SI System.
-        /// 
+        ///
         /// By using such a dimension, you enforce it is no longer compatible with unitless numbers.
-        pub Angle, 
+        pub Angle,
         /// ID for `Angle`. Used internally in [`inners::SIDim`](crate::si_system::inners::SIDim).
         pub AngleID ; "rad"
     ),
     (
         /// [`Dimension`](crate::Dimension) for a solid angle as part of extension of the SI System.
-        /// 
+        ///
         /// By using such a dimension, you enforce it is no longer compatible with unitless numbers.
         pub SolidAngle,
         /// ID for `SolidAngle`. Used internally in [`inners::SIDim`](crate::si_system::inners::SIDim).
@@ -335,7 +335,6 @@ si_add_dim! {
         /// The  [`SISystem`] with dimensions for angles.
         pub SISystemWithAngles
 }
-
 
 /// [`Dimension`](crate::Dimension) for angular velocity ([`Angle`]/[`Time`]).
 pub type AngularVelocity = op!(Angle / Time);

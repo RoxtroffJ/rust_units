@@ -254,7 +254,7 @@ where
     }
 }
 
-/// Substracts the other quantity to this quantity.
+/// Subtracts the other quantity to this quantity.
 ///
 /// This quantity does NOT change dimension.
 
@@ -355,7 +355,10 @@ where
 }
 
 impl<T, D: Dimension, RHS> Pow<RHS> for Quantity<T, D>
-where T: Pow<RHS>, D: Pow<RHS>, <D as Pow<RHS>>::Output: Dimension
+where
+    T: Pow<RHS>,
+    D: Pow<RHS>,
+    <D as Pow<RHS>>::Output: Dimension,
 {
     type Output = Quantity<<T as Pow<RHS>>::Output, <D as Pow<RHS>>::Output>;
 
@@ -364,8 +367,10 @@ where T: Pow<RHS>, D: Pow<RHS>, <D as Pow<RHS>>::Output: Dimension
     }
 }
 
-impl<T, D: Dimension> Display for Quantity<T, D> 
-where T: Display, D: TypeDisplay
+impl<T, D: Dimension> Display for Quantity<T, D>
+where
+    T: Display,
+    D: TypeDisplay,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.value.fmt(f)?;

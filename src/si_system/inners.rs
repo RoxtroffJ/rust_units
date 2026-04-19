@@ -1,12 +1,12 @@
-//! Types used internally to make the si system work. 
-//! 
+//! Types used internally to make the si system work.
+//!
 //! You should not have to interact with them directly for standard use of the si system (or even your own variants).
 
+use crate::si_system::SIDimension;
 use derive_where::derive_where;
-use extended_typenum::{TypeDisplay, op};
+use extended_typenum::{op, TypeDisplay};
 use num_traits::{Inv, MulAdd, MulAddAssign, Pow};
 use std::{marker::PhantomData, ops::*};
-use crate::si_system::SIDimension;
 
 /// The dimensionless dimension, used in [`SIDimension`].
 ///
@@ -45,9 +45,7 @@ pub mod helpers;
 use helpers::{SimplH, SimplifyHead};
 
 mod macros;
-use crate::{
-    si_impl_bin_op, si_impl_tern_op, si_impl_un_op,
-};
+use crate::{si_impl_bin_op, si_impl_tern_op, si_impl_un_op};
 
 macro_rules! impl_bin_std_op {
     ($Trait:ident, $fn:ident) => {
@@ -194,8 +192,6 @@ where
     }
 }
 
-
-
 impl<D> TypeDisplay for SIDimension<D>
 where
     D: TypeDisplay,
@@ -226,7 +222,7 @@ impl<I, O, E, I2, O2, E2, Rest2> TypeDisplay for SIDim<I, O, E, SIDim<I2, O2, E2
 where
     I: TypeDisplay,
     E: TypeDisplay,
-    SIDim<I2, O2, E2, Rest2>: TypeDisplay
+    SIDim<I2, O2, E2, Rest2>: TypeDisplay,
 {
     fn fmt(f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         I::fmt(f)?;
