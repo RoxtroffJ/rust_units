@@ -69,8 +69,8 @@
 //! use rust_units::Quantity;
 //! use rust_units::si_system::dimensions::{Length, Time};
 //!
-//! let time = Quantity::<_, Time>::from_si(4.);
-//! let length = Quantity::<_, Length>::from_si(-2.);
+//! let time = Quantity::<_, Time>::from_work(4.);
+//! let length = Quantity::<_, Length>::from_work(-2.);
 //!
 //! let speed = time.solve(length);
 //!
@@ -145,15 +145,15 @@
 //!     >;
 //!
 //!     fn solve(self, b: Quantity<Tb, Db>) -> Self::Output {
-//!         Self::Output::from_si(-b.get_si()/self.get_si())
+//!         Self::Output::from_work(-b.get_work()/self.get_work())
 //!     }
 //! }
 //!
 //! // Test
 //! use rust_units::si_system::dimensions::{Length, Time};
 //!
-//! let time = Quantity::<_, Time>::from_si(4.);
-//! let length = Quantity::<_, Length>::from_si(-2.);
+//! let time = Quantity::<_, Time>::from_work(4.);
+//! let length = Quantity::<_, Length>::from_work(-2.);
 //!
 //! let speed = time.solve(length);
 //!
@@ -273,13 +273,13 @@ where
 /// // Note that combinations of the dimensions must NOT be added. Instead, define operations on dimensions. (TODO: explain that better)
 /// // If you do not want the new system, you can omit the "= MySILikeSystem" part.
 ///
-/// let m = Quantity::<_,Length>::from_si(12.);
-/// let s = Quantity::<_,Time>::from_si(42.);
+/// let m = Quantity::<_,Length>::from_work(12.);
+/// let s = Quantity::<_,Time>::from_work(42.);
 ///
 /// let speed: Quantity<_,op!{Length/Time}> = m/s;
 /// // let sum = m + s; // Does not compile, which is good :)
 ///
-/// let something = Quantity::<_, MassSquared>::from_si(3528.) / s / s;
+/// let something = Quantity::<_, MassSquared>::from_work(3528.) / s / s;
 /// assert_eq!(format!("{something}"), "2 s^-2.kg^2")
 /// ```
 ///

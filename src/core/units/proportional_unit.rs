@@ -1,17 +1,17 @@
-//! This module contains the [`SIProportionalUnit`] trait and the [`SIPropUnit`] struct.
+//! This module contains the [`WorkProportionalUnit`] trait and the [`WorkPropUnit`] struct.
 use derive_where::derive_where;
 
 use super::*;
 
-/// This trait indicates that the unit is directly proportional to the [`SIUnit`].
+/// This trait indicates that the unit is directly proportional to the [`WorkUnit`].
 /// This enables the use of operations to derive units from existing ones.
 /// 
-/// If k is the proportionality constant returned by [`prop_constant`](SIProportionalUnit::prop_constant) and
+/// If k is the proportionality constant returned by [`prop_constant`](WorkProportionalUnit::prop_constant) and
 /// U is the current unit and
-/// SI is the [`SIUnit`],
-/// then SI = U*k.
+/// Work is the [`WorkUnit`],
+/// then Work = U*k.
 /// 
-/// The [`Unit`] trait is automatically implemented if the conversion operation in both direction between SI and U are possible (SI = U*k and U = SI/k).
+/// The [`Unit`] trait is automatically implemented if the conversion operation in both direction between Work and U are possible (Work = U*k and U = Work/k).
 /// 
 /// **Caution**: 
 /// When building a new unit, make sure that the proportionality constant is not zero, as this will lead to a meaningless unit, 
@@ -20,56 +20,56 @@ use super::*;
 /// Be especially careful when building units by combining some together.
 /// 
 /// ```T``` is the type of the [`Quantity`], and ```K``` is the type of the proportionality constant.
-pub trait SIProportionalUnit<T>: Unit<T, Dimension = Self::Dim> {
+pub trait WorkProportionalUnit<T>: Unit<T, Dimension = Self::Dim> {
     /// The dimension of the unit. It is the same as the [`Dimension`](Unit::Dimension) in the [`Unit`] trait.
     type Dim: Dimension;
 
-    /// The type of the proportionality constant between this unit and the [`SIUnit`].
+    /// The type of the proportionality constant between this unit and the [`WorkUnit`].
     /// 
     /// This type is unique to the unit because if a unit could handle multiple types,
     /// then it would store multiple constants, and the implementation of [`Unit`] would need to make a choice.
     type K;
 
-    /// The value of the proportionality constant between this unit and the [`SIUnit`].
+    /// The value of the proportionality constant between this unit and the [`WorkUnit`].
     fn prop_constant(&self) -> Self::K;
 }
 
-/// Use this trait to automatically implement the [`Unit`] trait for your [`SIProportionalUnit`]s.
+/// Use this trait to automatically implement the [`Unit`] trait for your [`WorkProportionalUnit`]s.
 /// 
-/// This is not done automatically for all [`SIProportionalUnit`]s to let you have a custom implementation of the [`Unit`] trait.
-/// However, if you do that, you **MUST** respect the conversion contract between the unit and the SI unit (SI = U*k and U = SI/k).
-pub trait AutoImplementSIProportionalUnit {}
+/// This is not done automatically for all [`WorkProportionalUnit`]s to let you have a custom implementation of the [`Unit`] trait.
+/// However, if you do that, you **MUST** respect the conversion contract between the unit and the work unit (Work = U*k and U = Work/k).
+pub trait AutoImplementWorkProportionalUnit {}
 
-/// Auto implementation of the [`Unit`] trait for all [`SIProportionalUnit`]s that implement the [`AutoImplementSIProportionalUnit`] trait.
-impl<T, U: SIProportionalUnit<T> + AutoImplementSIProportionalUnit> Unit<T> for U where 
-    T: Mul<<U as SIProportionalUnit<T>>::K, Output = T>,
-    T: Div<<U as SIProportionalUnit<T>>::K, Output = T>
+/// Auto implementation of the [`Unit`] trait for all [`WorkProportionalUnit`]s that implement the [`AutoImplementWorkProportionalUnit`] trait.
+impl<T, U: WorkProportionalUnit<T> + AutoImplementWorkProportionalUnit> Unit<T> for U where 
+    T: Mul<<U as WorkProportionalUnit<T>>::K, Output = T>,
+    T: Div<<U as WorkProportionalUnit<T>>::K, Output = T>
 {   
     type Dimension = U::Dim;
 
-    fn new(&self, value: T) -> Quantity<T, Self::Dimension> {
-        Quantity::from_si(value * self.prop_constant())
+    fn build(&self, value: T) -> Quantity<T, Self::Dimension> {
+        Quantity::from_work(value * self.prop_constant())
     }
 
     fn get(&self, quantity: Quantity<T, Self::Dimension>) -> T {
-        quantity.get_si() / self.prop_constant()
+        quantity.get_work() / self.prop_constant()
     }
 }
 
-/// A struct for a unit proportional to the [`SIUnit`].
+/// A struct for a unit proportional to the [`WorkUnit`].
 /// 
-/// The proportionality constant is required to be [`Clone`] because the [`prop_constant`](SIProportionalUnit::prop_constant) method returns a copy of it.
-/// A reference can't be used instead of the copy because when converting from or to SI, the [`mul`](Mul::mul) or [`div`](Div::div) operator is used, and it consumes the value.
+/// The proportionality constant is required to be [`Clone`] because the [`prop_constant`](WorkProportionalUnit::prop_constant) method returns a copy of it.
+/// A reference can't be used instead of the copy because when converting from or to work unit, the [`mul`](Mul::mul) or [`div`](Div::div) operator is used, and it consumes the value.
 #[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash; K)]
-pub struct SIPropUnit<K: Clone, D: Dimension> {
+pub struct WorkPropUnit<K: Clone, D: Dimension> {
     prop_constant: K,
     dimension: PhantomData<D>
 }
 
-impl<K: Clone, D: Dimension> SIPropUnit<K, D> {
-    /// Creates a new [`SIPropUnit`] with the given proportionality constant.
+impl<K: Clone, D: Dimension> WorkPropUnit<K, D> {
+    /// Creates a new [`WorkPropUnit`] with the given proportionality constant.
     /// 
-    /// Check the [`SIProportionalUnit`] trait for the definition of the proportionality constant.
+    /// Check the [`WorkProportionalUnit`] trait for the definition of the proportionality constant.
     /// 
     /// The proportionality constant must be non zero as the unit will then be meaningless.
     /// It could also lead to divisions by zero when using the unit.
@@ -82,9 +82,9 @@ impl<K: Clone, D: Dimension> SIPropUnit<K, D> {
     }
 }
 
-impl<K: Clone, D: Dimension> AutoImplementSIProportionalUnit for SIPropUnit<K, D>{}
+impl<K: Clone, D: Dimension> AutoImplementWorkProportionalUnit for WorkPropUnit<K, D>{}
 
-impl<K: Clone, T, D: Dimension> SIProportionalUnit<T> for SIPropUnit<K, D> where 
+impl<K: Clone, T, D: Dimension> WorkProportionalUnit<T> for WorkPropUnit<K, D> where 
     T: Mul<K, Output = T>,
     T: Div<K, Output = T>
 {
@@ -96,133 +96,133 @@ impl<K: Clone, T, D: Dimension> SIProportionalUnit<T> for SIPropUnit<K, D> where
 }
 
 
-impl<Kl: Clone, Kr: Clone, Dl: Dimension, Dr: Dimension> Add<SIPropUnit<Kr, Dr>> for SIPropUnit<Kl, Dl> where 
+impl<Kl: Clone, Kr: Clone, Dl: Dimension, Dr: Dimension> Add<WorkPropUnit<Kr, Dr>> for WorkPropUnit<Kl, Dl> where 
     Kl: Add<Kr>,
     Dl: Add<Dr>,
     <Kl as Add<Kr>>::Output: Clone,
     <Dl as Add<Dr>>::Output: Dimension
 {
-    type Output = SIPropUnit<<Kl as Add<Kr>>::Output, <Dl as Add<Dr>>::Output>;
+    type Output = WorkPropUnit<<Kl as Add<Kr>>::Output, <Dl as Add<Dr>>::Output>;
 
     /// Adds the two units together.
-    fn add(self, rhs: SIPropUnit<Kr, Dr>) -> Self::Output {
+    fn add(self, rhs: WorkPropUnit<Kr, Dr>) -> Self::Output {
         Self::Output::new(self.prop_constant + rhs.prop_constant)
     }
 }
 
-impl<Kl: Clone, Kr: Clone, Dl: Dimension, Dr: Dimension> Div<SIPropUnit<Kr, Dr>> for SIPropUnit<Kl, Dl> where 
+impl<Kl: Clone, Kr: Clone, Dl: Dimension, Dr: Dimension> Div<WorkPropUnit<Kr, Dr>> for WorkPropUnit<Kl, Dl> where 
     Kl: Div<Kr>,
     Dl: Div<Dr>,
     <Kl as Div<Kr>>::Output: Clone,
     <Dl as Div<Dr>>::Output: Dimension
 {
-    type Output = SIPropUnit<<Kl as Div<Kr>>::Output, <Dl as Div<Dr>>::Output>;
+    type Output = WorkPropUnit<<Kl as Div<Kr>>::Output, <Dl as Div<Dr>>::Output>;
 
     /// Divides the two units.
-    fn div(self, rhs: SIPropUnit<Kr, Dr>) -> Self::Output {
+    fn div(self, rhs: WorkPropUnit<Kr, Dr>) -> Self::Output {
         Self::Output::new(self.prop_constant / rhs.prop_constant)
     }
 }
 
-impl<Kl: Clone, Kr: Clone, Dl: Dimension, Dr: Dimension> Mul<SIPropUnit<Kr, Dr>> for SIPropUnit<Kl, Dl> where 
+impl<Kl: Clone, Kr: Clone, Dl: Dimension, Dr: Dimension> Mul<WorkPropUnit<Kr, Dr>> for WorkPropUnit<Kl, Dl> where 
     Kl: Mul<Kr>,
     Dl: Mul<Dr>,
     <Kl as Mul<Kr>>::Output: Clone,
     <Dl as Mul<Dr>>::Output: Dimension
 {
-    type Output = SIPropUnit<<Kl as Mul<Kr>>::Output, <Dl as Mul<Dr>>::Output>;
+    type Output = WorkPropUnit<<Kl as Mul<Kr>>::Output, <Dl as Mul<Dr>>::Output>;
 
     /// Multiplies the two units.
-    fn mul(self, rhs: SIPropUnit<Kr, Dr>) -> Self::Output {
+    fn mul(self, rhs: WorkPropUnit<Kr, Dr>) -> Self::Output {
         Self::Output::new(self.prop_constant * rhs.prop_constant)
     }
 }
 
-impl<Kl: Clone, Kr: Clone, Dl: Dimension, Dr: Dimension> Sub<SIPropUnit<Kr, Dr>> for SIPropUnit<Kl, Dl> where 
+impl<Kl: Clone, Kr: Clone, Dl: Dimension, Dr: Dimension> Sub<WorkPropUnit<Kr, Dr>> for WorkPropUnit<Kl, Dl> where 
     Kl: Sub<Kr>,
     Dl: Sub<Dr>,
     <Kl as Sub<Kr>>::Output: Clone,
     <Dl as Sub<Dr>>::Output: Dimension
 {
-    type Output = SIPropUnit<<Kl as Sub<Kr>>::Output, <Dl as Sub<Dr>>::Output>;
+    type Output = WorkPropUnit<<Kl as Sub<Kr>>::Output, <Dl as Sub<Dr>>::Output>;
 
     /// Subtracts the two units.
-    fn sub(self, rhs: SIPropUnit<Kr, Dr>) -> Self::Output {
+    fn sub(self, rhs: WorkPropUnit<Kr, Dr>) -> Self::Output {
         Self::Output::new(self.prop_constant - rhs.prop_constant)
     }
 }
 
-impl<Kl: Clone, Kr: Clone, Dl: Dimension, Dr: Dimension> Rem<SIPropUnit<Kr, Dr>> for SIPropUnit<Kl, Dl> where 
+impl<Kl: Clone, Kr: Clone, Dl: Dimension, Dr: Dimension> Rem<WorkPropUnit<Kr, Dr>> for WorkPropUnit<Kl, Dl> where 
     Kl: Rem<Kr>,
     Dl: Rem<Dr>,
     <Kl as Rem<Kr>>::Output: Clone,
     <Dl as Rem<Dr>>::Output: Dimension
 {
-    type Output = SIPropUnit<<Kl as Rem<Kr>>::Output, <Dl as Rem<Dr>>::Output>;
+    type Output = WorkPropUnit<<Kl as Rem<Kr>>::Output, <Dl as Rem<Dr>>::Output>;
 
     /// Remainder of the two units.
-    fn rem(self, rhs: SIPropUnit<Kr, Dr>) -> Self::Output {
+    fn rem(self, rhs: WorkPropUnit<Kr, Dr>) -> Self::Output {
         Self::Output::new(self.prop_constant % rhs.prop_constant)
     }
 }
 
-impl<K: Clone, D: Dimension> AddAssign for SIPropUnit<K, D> where 
+impl<K: Clone, D: Dimension> AddAssign for WorkPropUnit<K, D> where 
     K: AddAssign,
     D: AddAssign
 {
     /// Adds the two units together.
-    fn add_assign(&mut self, rhs: SIPropUnit<K, D>) {
+    fn add_assign(&mut self, rhs: WorkPropUnit<K, D>) {
         self.prop_constant += rhs.prop_constant;
     }
 }
 
-impl<K: Clone, D: Dimension> DivAssign for SIPropUnit<K, D> where 
+impl<K: Clone, D: Dimension> DivAssign for WorkPropUnit<K, D> where 
     K: DivAssign,
     D: DivAssign
 {
     /// Divides the two units.
-    fn div_assign(&mut self, rhs: SIPropUnit<K, D>) {
+    fn div_assign(&mut self, rhs: WorkPropUnit<K, D>) {
         self.prop_constant /= rhs.prop_constant;
     }
 }
 
-impl<K: Clone, D: Dimension> MulAssign for SIPropUnit<K, D> where 
+impl<K: Clone, D: Dimension> MulAssign for WorkPropUnit<K, D> where 
     K: MulAssign,
     D: MulAssign
 {
     /// Multiplies the two units.
-    fn mul_assign(&mut self, rhs: SIPropUnit<K, D>) {
+    fn mul_assign(&mut self, rhs: WorkPropUnit<K, D>) {
         self.prop_constant *= rhs.prop_constant;
     }
 }
 
-impl<K: Clone, D: Dimension> SubAssign for SIPropUnit<K, D> where 
+impl<K: Clone, D: Dimension> SubAssign for WorkPropUnit<K, D> where 
     K: SubAssign,
     D: SubAssign
 {
     /// Subtracts the two units.
-    fn sub_assign(&mut self, rhs: SIPropUnit<K, D>) {
+    fn sub_assign(&mut self, rhs: WorkPropUnit<K, D>) {
         self.prop_constant -= rhs.prop_constant;
     }
 }
 
-impl<K: Clone, D: Dimension> RemAssign for SIPropUnit<K, D> where 
+impl<K: Clone, D: Dimension> RemAssign for WorkPropUnit<K, D> where 
     K: RemAssign,
     D: RemAssign
 {
     /// Remainder of the two units.
-    fn rem_assign(&mut self, rhs: SIPropUnit<K, D>) {
+    fn rem_assign(&mut self, rhs: WorkPropUnit<K, D>) {
         self.prop_constant %= rhs.prop_constant;
     }
 }
 
-impl<K: Clone, D: Dimension> Neg for SIPropUnit<K, D> where 
+impl<K: Clone, D: Dimension> Neg for WorkPropUnit<K, D> where 
     K: Neg,
     D: Neg,
     <K as Neg>::Output: Clone,
     <D as Neg>::Output: Dimension
 {
-    type Output = SIPropUnit<<K as Neg>::Output, <D as Neg>::Output>;
+    type Output = WorkPropUnit<<K as Neg>::Output, <D as Neg>::Output>;
 
     /// Negates the unit.
     fn neg(self) -> Self::Output {

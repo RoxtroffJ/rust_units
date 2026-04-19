@@ -7,8 +7,8 @@
 //! - The [`Unit`]s: These indicates the unit of a quantity. They are associated to a [`Dimension`]. 
 //!   For example, the dimension `length` could have the following units: meter, feet, inch, ...
 //! - The [`Quantity`]: This struct holds a numerical value of a given [`Dimension`] in a default unit suitable for calculations.
-//!   We call this unit the `SI` unit (even if the dimension has nothing to do with the SI system). 
-//!   We can then set or retrieve the contained numerical value in SI unit or any other unit by specifying it when doing so.
+//!   We call this unit the `work` unit. 
+//!   We can then set or retrieve the contained numerical value in work unit or any other unit by specifying it when doing so.
 
 mod core;
 pub use core::*;

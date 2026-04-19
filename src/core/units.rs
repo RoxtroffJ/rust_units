@@ -9,14 +9,14 @@ use std::ops::*;
 mod proportional_unit;
 pub use proportional_unit::*;
 
-mod si_unit;
-pub use si_unit::*;
+mod work_unit;
+pub use work_unit::*;
 
 use super::*;
 
 /// Trait used to define a unit.
 ///
-/// It must provide a [`new`](Unit::new) and [`get`](Unit::get) method to respectively
+/// It must provide a [`build`](Unit::build) and [`get`](Unit::get) method to respectively
 /// create and retrieve a [`Quantity`] of the unit.
 ///
 /// The type of the quantity is defined by the generic parameter ```T```.
@@ -30,7 +30,7 @@ pub trait Unit<T> {
     }
 
     /// Converts a value into a [`Quantity`].
-    fn new(&self, value: T) -> Quantity<T, Self::Dimension>;
+    fn build(&self, value: T) -> Quantity<T, Self::Dimension>;
 
     /// Retrieves the value of a [`Quantity`].
     fn get(&self, quantity: Quantity<T, Self::Dimension>) -> T;

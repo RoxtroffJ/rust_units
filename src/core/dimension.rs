@@ -9,7 +9,7 @@
 /// To then associate this quantity to a numerical value, one needs a [`Unit`](super::Unit) (meter, feet, ... for a length for example).
 /// 
 /// All the dimensions have at least one associated [`Unit`](super::Unit).
-/// This default unit is called the [`SIUnit`](super::SIUnit). It is then used internally to perform all the computations between [`quantities`](super::quantity::Quantity).
+/// This default unit is called the [`WorkUnit`](super::WorkUnit). It is then used internally to perform all the computations between [`quantities`](super::quantity::Quantity).
 /// 
 /// **Note**: If you implement this trait yourself, make sure to implement the operation traits ([`Add`](std::ops::Add),[`Mul`](std::ops::Mul),...)
 /// in a coherent way, such that the operations are defined if and only if they make sense.

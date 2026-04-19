@@ -48,8 +48,8 @@ pub struct Quantity<T, D: Dimension> {
 }
 
 impl<T, D: Dimension> Quantity<T, D> {
-    /// Creates a new quantity from it's SI (default) [`unit`](super::units::Unit).
-    pub const fn from_si(value: T) -> Self {
+    /// Creates a new quantity from its work (default) [`unit`](super::units::Unit).
+    pub const fn from_work(value: T) -> Self {
         Self {
             value,
             dimension: PhantomData,
@@ -58,7 +58,7 @@ impl<T, D: Dimension> Quantity<T, D> {
 
     /// Creates a new quantity from the given unit.
     pub fn from<U: Unit<T, Dimension = D>>(value: T, unit: &U) -> Self {
-        unit.new(value)
+        unit.build(value)
     }
 
     /// Compute and returns the value in the given unit.
@@ -66,18 +66,18 @@ impl<T, D: Dimension> Quantity<T, D> {
         unit.get(self)
     }
 
-    /// Returns the numerical value of the quantity in SI (default) [`unit`](super::units::Unit).
-    pub fn get_si(self) -> T {
+    /// Returns the numerical value of the quantity in the work (default) [`unit`](super::units::Unit).
+    pub fn get_work(self) -> T {
         self.value
     }
 
-    /// Returns a reference to the numerical value of the quantity in SI (default) [`unit`](super::units::Unit).
-    pub fn get_ref_si(&self) -> &T {
+    /// Returns a reference to the numerical value of the quantity in the work (default) [`unit`](super::units::Unit).
+    pub fn get_ref_work(&self) -> &T {
         &self.value
     }
 
-    /// Returns a mutable reference to the numerical value of the quantity in SI (default) [`unit`](super::units::Unit).
-    pub fn get_mut_si(&mut self) -> &mut T {
+    /// Returns a mutable reference to the numerical value of the quantity in the work (default) [`unit`](super::units::Unit).
+    pub fn get_mut_work(&mut self) -> &mut T {
         &mut self.value
     }
 
@@ -133,7 +133,7 @@ where
     type Output = Quantity<<Tl as Add<Tr>>::Output, <Dl as Add<Dr>>::Output>;
 
     fn add(self, rhs: Quantity<Tr, Dr>) -> Self::Output {
-        Self::Output::from_si(self.get_si() + rhs.get_si())
+        Self::Output::from_work(self.get_work() + rhs.get_work())
     }
 }
 
@@ -146,7 +146,7 @@ where
     Dl: AddAssign<Dr>,
 {
     fn add_assign(&mut self, rhs: Quantity<Tr, Dr>) {
-        *self.get_mut_si() += rhs.get_si()
+        *self.get_mut_work() += rhs.get_work()
     }
 }
 
@@ -159,7 +159,7 @@ where
     type Output = Quantity<<Tl as Div<Tr>>::Output, <Dl as Div<Dr>>::Output>;
 
     fn div(self, rhs: Quantity<Tr, Dr>) -> Self::Output {
-        Self::Output::from_si(self.get_si() / rhs.get_si())
+        Self::Output::from_work(self.get_work() / rhs.get_work())
     }
 }
 
@@ -172,7 +172,7 @@ where
     Dl: DivAssign<Dr>,
 {
     fn div_assign(&mut self, rhs: Quantity<Tr, Dr>) {
-        *self.get_mut_si() /= rhs.get_si()
+        *self.get_mut_work() /= rhs.get_work()
     }
 }
 
@@ -185,7 +185,7 @@ where
     type Output = Quantity<<Tl as Mul<Tr>>::Output, <Dl as Mul<Dr>>::Output>;
 
     fn mul(self, rhs: Quantity<Tr, Dr>) -> Self::Output {
-        Self::Output::from_si(self.get_si() * rhs.get_si())
+        Self::Output::from_work(self.get_work() * rhs.get_work())
     }
 }
 
@@ -198,7 +198,7 @@ where
     Dl: MulAssign<Dr>,
 {
     fn mul_assign(&mut self, rhs: Quantity<Tr, Dr>) {
-        *self.get_mut_si() *= rhs.get_si()
+        *self.get_mut_work() *= rhs.get_work()
     }
 }
 
@@ -211,7 +211,7 @@ where
     type Output = Quantity<<T as Neg>::Output, <D as Neg>::Output>;
 
     fn neg(self) -> Self::Output {
-        Self::Output::from_si(-self.get_si())
+        Self::Output::from_work(-self.get_work())
     }
 }
 
@@ -224,7 +224,7 @@ where
     type Output = Quantity<<Tl as Rem<Tr>>::Output, <Dl as Rem<Dr>>::Output>;
 
     fn rem(self, rhs: Quantity<Tr, Dr>) -> Self::Output {
-        Self::Output::from_si(self.get_si() % rhs.get_si())
+        Self::Output::from_work(self.get_work() % rhs.get_work())
     }
 }
 
@@ -237,7 +237,7 @@ where
     Dl: RemAssign<Dr>,
 {
     fn rem_assign(&mut self, rhs: Quantity<Tr, Dr>) {
-        *self.get_mut_si() %= rhs.get_si()
+        *self.get_mut_work() %= rhs.get_work()
     }
 }
 
@@ -250,7 +250,7 @@ where
     type Output = Quantity<<Tl as Sub<Tr>>::Output, <Dl as Sub<Dr>>::Output>;
 
     fn sub(self, rhs: Quantity<Tr, Dr>) -> Self::Output {
-        Self::Output::from_si(self.get_si() - rhs.get_si())
+        Self::Output::from_work(self.get_work() - rhs.get_work())
     }
 }
 
@@ -264,7 +264,7 @@ where
     Dl: SubAssign<Dr>,
 {
     fn sub_assign(&mut self, rhs: Quantity<Tr, Dr>) {
-        *self.get_mut_si() -= rhs.get_si()
+        *self.get_mut_work() -= rhs.get_work()
     }
 }
 
@@ -285,7 +285,7 @@ where
     D: Mul<D, Output = D>,
 {
     fn one() -> Self {
-        Self::from_si(T::one())
+        Self::from_work(T::one())
     }
 }
 
@@ -293,7 +293,7 @@ impl<T: ConstOne, D: Dimension> ConstOne for Quantity<T, D>
 where
     Quantity<T, D>: One,
 {
-    const ONE: Self = Self::from_si(<T as ConstOne>::ONE);
+    const ONE: Self = Self::from_work(<T as ConstOne>::ONE);
 }
 
 impl<T: Zero, D: Dimension> Zero for Quantity<T, D>
@@ -301,11 +301,11 @@ where
     D: Add<D, Output = D>,
 {
     fn zero() -> Self {
-        Self::from_si(T::zero())
+        Self::from_work(T::zero())
     }
 
     fn is_zero(&self) -> bool {
-        self.get_ref_si().is_zero()
+        self.get_ref_work().is_zero()
     }
 }
 
@@ -313,7 +313,7 @@ impl<T: ConstZero, D: Dimension> ConstZero for Quantity<T, D>
 where
     Quantity<T, D>: Zero,
 {
-    const ZERO: Self = Self::from_si(<T as ConstZero>::ZERO);
+    const ZERO: Self = Self::from_work(<T as ConstZero>::ZERO);
 }
 
 impl<T, D: Dimension> Inv for Quantity<T, D>
@@ -325,7 +325,7 @@ where
     type Output = Quantity<<T as Inv>::Output, <D as Inv>::Output>;
 
     fn inv(self) -> Self::Output {
-        Self::Output::from_si(self.get_si().inv())
+        Self::Output::from_work(self.get_work().inv())
     }
 }
 
@@ -339,7 +339,7 @@ where
     type Output = Quantity<<T as MulAdd<A, B>>::Output, <D as MulAdd<DA, DB>>::Output>;
 
     fn mul_add(self, a: Quantity<A, DA>, b: Quantity<B, DB>) -> Self::Output {
-        Self::Output::from_si(self.get_si().mul_add(a.get_si(), b.get_si()))
+        Self::Output::from_work(self.get_work().mul_add(a.get_work(), b.get_work()))
     }
 }
 
@@ -350,7 +350,7 @@ where
     D: MulAddAssign<DA, DB>,
 {
     fn mul_add_assign(&mut self, a: Quantity<A, DA>, b: Quantity<B, DB>) {
-        self.get_mut_si().mul_add_assign(a.get_si(), b.get_si());
+        self.get_mut_work().mul_add_assign(a.get_work(), b.get_work());
     }
 }
 
@@ -363,7 +363,7 @@ where
     type Output = Quantity<<T as Pow<RHS>>::Output, <D as Pow<RHS>>::Output>;
 
     fn pow(self, rhs: RHS) -> Self::Output {
-        Self::Output::from_si(self.get_si().pow(rhs))
+        Self::Output::from_work(self.get_work().pow(rhs))
     }
 }
 
