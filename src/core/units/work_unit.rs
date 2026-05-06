@@ -77,7 +77,6 @@ where
     T: Mul<K, Output = T>,
     T: Div<K, Output = T>,
 {
-    type Dim = D;
     type K = K;
 
     fn prop_constant(&self) -> Self::K {

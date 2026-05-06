@@ -1,8 +1,29 @@
 {
     "cSpell.words": [
+        "atto",
+        "centi",
+        "deca",
+        "deci",
+        "deka",
         "Dimless",
+        "femto",
+        "giga",
+        "hecto",
+        "milli",
+        "peta",
+        "pico",
+        "Prefixable",
+        "quecto",
+        "quetta",
+        "ronna",
+        "ronto",
         "tarr",
+        "tera",
         "typenum",
-        "unitless"
+        "unitless",
+        "yocto",
+        "yotta",
+        "zepto",
+        "zetta"
     ]
 }
