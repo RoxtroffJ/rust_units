@@ -5,7 +5,7 @@
 use std::{fmt::Display, marker::PhantomData, ops::Add};
 
 use derive_where::derive_where;
-use extended_typenum::Sum;
+use extended_typenum::operator_aliases::Sum;
 
 use crate::{
     impl_type_unit,
@@ -47,11 +47,30 @@ impl<D: Dimension, F, E, P: TypePrefix, Meta> SITypePropUnit<D, F, E, P, Meta> {
     /// ## Example
     /// ```
     /// use rust_units::si_system::{units::*, dimensions::*};
-    /// use extended_typenum::{rational, P254, U100, N2};
-    ///
-    /// let inch: SITypePropUnit<Length, rational!(P254; U100), N2, prefix::NotPrefixable, _> = SITypePropUnit::new("in");
+    /// use extended_typenum::{rational, P254, U100, N2, Z0, P1};
+    /// use rust_units::Unit;
+    /// 
+    /// // Create two new units of length:
+    /// 
+    /// let inch: SITypePropUnit<Length, rational!(P254; U100), N2, prefix::NotPrefixable, &str> // One inch = 2.54 cm = 254/100 e-2 m 
+    ///     = SITypePropUnit::new("in");
+    /// 
+    /// let centimeter: SITypePropUnit<Length, rational!(P1;), Z0, prefix::Centi, &str> // defined as meter (which is work unit) with Centi prefix.
+    ///     = SITypePropUnit::new("m");
+    /// 
+    /// // Confirm that the correct units were created:
+    /// assert_eq!(format!("{inch}"), "in");
+    /// assert_eq!(format!("{centimeter}"), "cm"); // In "cm", the "c" comes from prefix::Centi, the "m" comes from new("m").
+    /// 
+    /// // Since centimeter has a prefix, we can change this prefix:
+    /// let millimeter = centimeter.set_milli_prefix();
+    /// 
+    /// // Now we can test our units:
+    /// let inch_length = 42f64;
+    /// let length = inch.build(inch_length);
+    /// assert_eq!(format!("{inch_length:.3} {inch} = {length:.3} = {:.3} {millimeter}", length.get_in(&millimeter)), "42.000 in = 1.067 m = 1066.800 mm");
     /// ```
-    pub fn new(meta: Meta) -> Self {
+    pub const fn new(meta: Meta) -> Self {
         Self {
             data: PhantomData,
             prefix: PhantomData,

@@ -100,9 +100,9 @@ where
     Num: Unsigned + NonZero,
     Den: Unsigned + NonZero,
     E: Unsigned + NonZero,
-    SITypePropUnitData<D, R<PInt<Den>, Num>, E>: IsOne,
+    SITypePropUnitData<D, R<PInt<Den>, Num>, PInt<E>>: IsOne,
 {
-    type Output = <SITypePropUnitData<D, R<PInt<Den>, Num>, E> as IsOne>::Output;
+    type Output = <SITypePropUnitData<D, R<PInt<Den>, Num>, PInt<E>> as IsOne>::Output;
 }
 
 /// Case Num = 0 -> False
@@ -166,11 +166,11 @@ impl_type_unit! {
 impl_type_unit! {
     impl{T: Mul<f64, Output = T> + Div<f64, Output = T>, D: Dimension, F: Rational, E: Integer} TypeUnit<T> for UnitHelper<D, F, E, False> => D {
         fn t_build(value) {
-            Quantity::from_work(value * F::F64.powi(E::I32))
+            Quantity::from_work(value * (F::F64 * 10f64.powi(E::I32)))
         }
 
         fn t_get(quantity) {
-            quantity.get_work() / F::F64.powi(E::I32)
+            quantity.get_work() / (F::F64 * 10f64.powi(E::I32))
         }
     }
 }
