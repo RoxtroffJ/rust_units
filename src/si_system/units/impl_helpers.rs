@@ -1,13 +1,14 @@
-//! Contains traits that help with the implementation of SI units.
+//! Contains structs and traits that help with the implementation of SI units.
 
 use std::ops::{Div, Mul, Rem, Sub};
 
 use extended_typenum::{
-    Diff, Eq, False, Integer, IsEqual, Mod, NInt, NonZero, PInt, Quot, R, Rational, True, U0, U1, U10, UInt, Unsigned, Z0
+    Diff, Eq, False, Integer, IsEqual, Mod, NInt, NonZero, PInt, Quot, Rational, True, UInt,
+    Unsigned, R, U0, U1, U10, Z0,
 };
 
 use super::*;
-use crate::{Dimension, Quantity, impl_type_unit};
+use crate::{impl_type_unit, Dimension, Quantity};
 
 /// Data that indicates at compile time the [`Dimension`] and proportionality constant of a unit.
 ///
@@ -26,6 +27,25 @@ pub struct SITypePropUnitData<D: Dimension, F, E> {
     float: PhantomData<F>,
     exp: PhantomData<E>,
 }
+
+/// Trait that indicates a corresponding [`SITypePropUnitData`] to the implementing type.
+///
+/// Works with the [`GetSITypePropUnitData`] alias.
+pub trait ToSITypePropUnitData {
+    /// [`Dimension`] type.
+    type D;
+    /// Float part of the proportionality constant.
+    type F;
+    /// Exponent part of the proportionality constant.
+    type E;
+}
+
+/// The [`SITypePropUnitData`] corresponding to a type.
+pub type GetSITypePropUnitData<T> = SITypePropUnitData<
+    <T as ToSITypePropUnitData>::D,
+    <T as ToSITypePropUnitData>::F,
+    <T as ToSITypePropUnitData>::E,
+>;
 
 /// Determines if the given constant, defined as F*10^E is 1.
 pub trait IsOne {
@@ -53,9 +73,7 @@ where
 }
 
 /// Case E != 0 and R != 0 (ie Den % 10 != 0)
-impl<Num, Den, UE, BE, UR, BR> IsOne for IsOneChecker<Num, Den, UInt<UE, BE>, UInt<UR, BR>>
-where
-{
+impl<Num, Den, UE, BE, UR, BR> IsOne for IsOneChecker<Num, Den, UInt<UE, BE>, UInt<UR, BR>> {
     type Output = False;
 }
 
@@ -67,7 +85,12 @@ where
     Quot<Den, U10>: Rem<U10>,
     IsOneChecker<Num, Quot<Den, U10>, Diff<UInt<UE, BE>, U1>, Mod<Quot<Den, U10>, U10>>: IsOne,
 {
-    type Output = <IsOneChecker<Num, Quot<Den, U10>, Diff<UInt<UE, BE>, U1>, Mod<Quot<Den, U10>, U10>> as IsOne>::Output;
+    type Output = <IsOneChecker<
+        Num,
+        Quot<Den, U10>,
+        Diff<UInt<UE, BE>, U1>,
+        Mod<Quot<Den, U10>, U10>,
+    > as IsOne>::Output;
 }
 
 /// Case E > 0 and Num > 0
@@ -127,11 +150,12 @@ where
 /// Mixture of a [`SITypePropUnitData`] and it's [`IsOne`] result.
 pub struct UnitHelper<D: Dimension, F, E, One> {
     data: PhantomData<SITypePropUnitData<D, F, E>>,
-    is_one: PhantomData<One>
+    is_one: PhantomData<One>,
 }
 
 /// Type alias to turn a [`SITypePropUnitData`] into a [`UnitHelper`]
-pub type UnitImplHelper<D, F, E> = UnitHelper<D, F, E, <SITypePropUnitData<D, F, E> as IsOne>::Output>;
+pub type UnitImplHelper<D, F, E> =
+    UnitHelper<D, F, E, <SITypePropUnitData<D, F, E> as IsOne>::Output>;
 
 impl_type_unit! {
     impl{T, D: Dimension, F, E} TypeUnit<T> for SITypePropUnitData<D, F, E>

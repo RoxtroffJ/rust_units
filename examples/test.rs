@@ -6,5 +6,5 @@ use extended_typenum::{N2, NInt, NonZero, P1, P127, P254, PInt, R, U2, U50, U100
 fn assert_impl<Test: IsOne>() {}
 
 fn main() {
-    assert_impl::<>();
+    //assert_impl::<>();
 }

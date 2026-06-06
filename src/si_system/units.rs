@@ -2,15 +2,14 @@
 //!
 //! These units are computed during the compilation, and implement mainly [`TypeUnit`].
 
-use std::{fmt::Display, marker::PhantomData, ops::Add};
+use std::{fmt::Display, marker::PhantomData};
 
 use derive_where::derive_where;
-use extended_typenum::operator_aliases::Sum;
 
 use crate::{
-    impl_type_unit,
-    si_system::units::prefix::{CanChangePrefix, TypePrefix},
-    Dimension, TypeUnit,
+    Dimension, TypeUnit, impl_type_unit, si_system::units::{
+        impl_helpers::{GetSITypePropUnitData, ToSITypePropUnitData}, inner_module_types::{PrefixedUnit, SimpleUnit}, prefix::{CanChangePrefix, TypePrefix}
+    }
 };
 
 // pub mod constant;
@@ -18,32 +17,27 @@ pub mod prefix;
 use prefix::*;
 
 pub mod impl_helpers;
+pub mod inner_module_types;
 
-/// Simple unit that implements [`TypeUnit`].
+/// A unit proportional to the SI unit. It implements [`TypeUnit`].
 ///
-/// There are five generics:
-/// - `D`: [`Dimension`] of the unit.
-/// - `F` and `E`: Proportionality constant of this unit.
-///   
-///   If k is the proportionality constant (so [`WorkUnit`](crate::WorkUnit) = k * ThisUnit),
-///   k can be written as F*10^E.
-///   
-///   `F` should be a [`rational`](mod@extended_typenum::rational) and `E` an [`integer`](extended_typenum::int).
-/// - `P`: Prefix type. Should be implementing [`TypePrefix`].
-/// - `Meta`: Some runtime metadata that can implement traits like [`Display`].
-#[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash; Meta)]
-pub struct SITypePropUnit<D: Dimension, F, E, P: TypePrefix, Meta> {
-    data: PhantomData<impl_helpers::SITypePropUnitData<D, F, E>>,
-    prefix: PhantomData<P>,
-    meta: Meta,
+/// Generics description:
+/// - `I`: Inner type describing the unit. The valid types are defined in the [`inner_unit_types`] module.
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SIPropUnit<I> {
+    inner: I,
 }
 
-impl<D: Dimension, F, E, P: TypePrefix, Meta> SITypePropUnit<D, F, E, P, Meta> {
-    /// Create a new unit with the given metadata.
-    ///
-    /// Usually, this metadata is a &'static str.
-    /// If the metadata implements [`Display`], so will the build unit.
-    ///
+impl<D: Dimension, F, E, Meta>
+    SIPropUnit<SimpleUnit<D, F, E, Meta>>
+{
+    /// Creates a new simple unit, with the given metadata.
+    /// 
+    /// In order to help with type definition, you can use the [`SimpleSIPropUnit`] type alias.
+    /// 
+    /// If this metadata implements [`Display`], so will this unit.
+    /// 
     /// ## Example
     /// ```
     /// use rust_units::si_system::{units::*, dimensions::*};
@@ -52,201 +46,200 @@ impl<D: Dimension, F, E, P: TypePrefix, Meta> SITypePropUnit<D, F, E, P, Meta> {
     /// 
     /// // Create two new units of length:
     /// 
-    /// let inch: SITypePropUnit<Length, rational!(P254; U100), N2, prefix::NotPrefixable, &str> // One inch = 2.54 cm = 254/100 e-2 m 
-    ///     = SITypePropUnit::new("in");
+    /// let inch = SimpleSIPropUnit::<Length, rational!(P254; U100), N2, &str>::new("in") // One inch = 2.54 cm = 254/100 e-2 m 
+    ///     .make_not_prefixable();
     /// 
-    /// let centimeter: SITypePropUnit<Length, rational!(P1;), Z0, prefix::Centi, &str> // defined as meter (which is work unit) with Centi prefix.
-    ///     = SITypePropUnit::new("m");
+    /// let centimeter = SimpleSIPropUnit::<Length, rational!(P1;), Z0, &str>::new("m") // defined as meter (which is work unit) with Centi prefix.
+    ///     .set_centi_prefix();
     /// 
     /// // Confirm that the correct units were created:
     /// assert_eq!(format!("{inch}"), "in");
     /// assert_eq!(format!("{centimeter}"), "cm"); // In "cm", the "c" comes from prefix::Centi, the "m" comes from new("m").
     /// 
-    /// // Since centimeter has a prefix, we can change this prefix:
+    /// // We can change the centimeter prefix:
     /// let millimeter = centimeter.set_milli_prefix();
+    /// // But not of inch
+    /// // let milli_inch = inch.set_milli_prefix(); // Does not compile
     /// 
     /// // Now we can test our units:
     /// let inch_length = 42f64;
     /// let length = inch.build(inch_length);
     /// assert_eq!(format!("{inch_length:.3} {inch} = {length:.3} = {:.3} {millimeter}", length.get_in(&millimeter)), "42.000 in = 1.067 m = 1066.800 mm");
-    /// ```
+    
     pub const fn new(meta: Meta) -> Self {
         Self {
-            data: PhantomData,
-            prefix: PhantomData,
-            meta,
+            inner: SimpleUnit::new(meta)
         }
     }
 }
 
+/// Type alias for a [`SIPropUnit`] containing a [`SimpleUnit`], ie `SIPropUnit<SimpleUnit<...>>`.
+pub type SimpleSIPropUnit<D, F, E, Meta> = SIPropUnit<SimpleUnit<D, F, E, Meta>>;
+
+impl<I> CanChangePrefix for SIPropUnit<I>
+where I: CanChangePrefix {}
+
 /// Prefix change
-impl<D: Dimension, F, E, P: TypePrefix, Meta> SITypePropUnit<D, F, E, P, Meta>
+impl<I> SIPropUnit<I>
 where
-    P: CanChangePrefix,
+    I: CanChangePrefix,
 {
     /// Changes the prefix type.
-    pub fn change_prefix<NewP: TypePrefix>(self) -> SITypePropUnit<D, F, E, NewP, Meta> {
-        SITypePropUnit::<D, F, E, NewP, Meta> {
-            data: self.data,
-            prefix: PhantomData::<NewP>,
-            meta: self.meta,
-        }
+    pub const fn change_prefix<P: TypePrefix>(self) -> SIPropUnit<PrefixedUnit<Self, P>> {
+        SIPropUnit { inner: PrefixedUnit::<Self, P>::new(self)}
     }
 
     /// Removes the prefix (if there was one).
-    pub fn remove_prefix(self) -> SITypePropUnit<D, F, E, None, Meta> {
+    pub const fn remove_prefix(self) -> SIPropUnit<PrefixedUnit<Self, None>> {
         self.change_prefix::<None>()
     }
 
     /// Removes the prefix and makes the unit non prefixable anymore.
-    pub fn make_not_prefixable(self) -> SITypePropUnit<D, F, E, NotPrefixable, Meta> {
+    pub const fn make_not_prefixable(self) -> SIPropUnit<PrefixedUnit<Self, NotPrefixable>> {
         self.change_prefix::<NotPrefixable>()
     }
 
     /// Sets the prefix to [`Quecto`]
-    pub fn set_quecto_prefix(self) -> SITypePropUnit<D, F, E, Quecto, Meta> {
+    pub const fn set_quecto_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Quecto>> {
         self.change_prefix::<Quecto>()
     }
 
     /// Sets the prefix to [`Ronto`]
-    pub fn set_ronto_prefix(self) -> SITypePropUnit<D, F, E, Ronto, Meta> {
+    pub const fn set_ronto_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Ronto>> {
         self.change_prefix::<Ronto>()
     }
 
     /// Sets the prefix to [`Yocto`]
-    pub fn set_yocto_prefix(self) -> SITypePropUnit<D, F, E, Yocto, Meta> {
+    pub const fn set_yocto_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Yocto>> {
         self.change_prefix::<Yocto>()
     }
 
     /// Sets the prefix to [`Zepto`]
-    pub fn set_zepto_prefix(self) -> SITypePropUnit<D, F, E, Zepto, Meta> {
+    pub const fn set_zepto_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Zepto>> {
         self.change_prefix::<Zepto>()
     }
 
     /// Sets the prefix to [`Atto`]
-    pub fn set_atto_prefix(self) -> SITypePropUnit<D, F, E, Atto, Meta> {
+    pub const fn set_atto_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Atto>> {
         self.change_prefix::<Atto>()
     }
 
     /// Sets the prefix to [`Femto`]
-    pub fn set_femto_prefix(self) -> SITypePropUnit<D, F, E, Femto, Meta> {
+    pub const fn set_femto_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Femto>> {
         self.change_prefix::<Femto>()
     }
 
     /// Sets the prefix to [`Pico`]
-    pub fn set_pico_prefix(self) -> SITypePropUnit<D, F, E, Pico, Meta> {
+    pub const fn set_pico_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Pico>> {
         self.change_prefix::<Pico>()
     }
 
     /// Sets the prefix to [`Nano`]
-    pub fn set_nano_prefix(self) -> SITypePropUnit<D, F, E, Nano, Meta> {
+    pub const fn set_nano_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Nano>> {
         self.change_prefix::<Nano>()
     }
 
     /// Sets the prefix to [`Micro`]
-    pub fn set_micro_prefix(self) -> SITypePropUnit<D, F, E, Micro, Meta> {
+    pub const fn set_micro_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Micro>> {
         self.change_prefix::<Micro>()
     }
 
     /// Sets the prefix to [`Milli`]
-    pub fn set_milli_prefix(self) -> SITypePropUnit<D, F, E, Milli, Meta> {
+    pub const fn set_milli_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Milli>> {
         self.change_prefix::<Milli>()
     }
 
     /// Sets the prefix to [`Centi`]
-    pub fn set_centi_prefix(self) -> SITypePropUnit<D, F, E, Centi, Meta> {
+    pub const fn set_centi_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Centi>> {
         self.change_prefix::<Centi>()
     }
 
     /// Sets the prefix to [`Deci`]
-    pub fn set_deci_prefix(self) -> SITypePropUnit<D, F, E, Deci, Meta> {
+    pub const fn set_deci_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Deci>> {
         self.change_prefix::<Deci>()
     }
 
     /// Sets the prefix to [`Deca`]
-    pub fn set_deca_prefix(self) -> SITypePropUnit<D, F, E, Deca, Meta> {
+    pub const fn set_deca_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Deca>> {
         self.change_prefix::<Deca>()
     }
 
     /// Sets the prefix to [`Hecto`]
-    pub fn set_hecto_prefix(self) -> SITypePropUnit<D, F, E, Hecto, Meta> {
+    pub const fn set_hecto_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Hecto>> {
         self.change_prefix::<Hecto>()
     }
 
     /// Sets the prefix to [`Kilo`]
-    pub fn set_kilo_prefix(self) -> SITypePropUnit<D, F, E, Kilo, Meta> {
+    pub const fn set_kilo_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Kilo>> {
         self.change_prefix::<Kilo>()
     }
 
     /// Sets the prefix to [`Mega`]
-    pub fn set_mega_prefix(self) -> SITypePropUnit<D, F, E, Mega, Meta> {
+    pub const fn set_mega_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Mega>> {
         self.change_prefix::<Mega>()
     }
 
     /// Sets the prefix to [`Giga`]
-    pub fn set_giga_prefix(self) -> SITypePropUnit<D, F, E, Giga, Meta> {
+    pub const fn set_giga_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Giga>> {
         self.change_prefix::<Giga>()
     }
 
     /// Sets the prefix to [`Tera`]
-    pub fn set_tera_prefix(self) -> SITypePropUnit<D, F, E, Tera, Meta> {
+    pub const fn set_tera_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Tera>> {
         self.change_prefix::<Tera>()
     }
 
     /// Sets the prefix to [`Peta`]
-    pub fn set_peta_prefix(self) -> SITypePropUnit<D, F, E, Peta, Meta> {
+    pub const fn set_peta_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Peta>> {
         self.change_prefix::<Peta>()
     }
 
     /// Sets the prefix to [`Exa`]
-    pub fn set_exa_prefix(self) -> SITypePropUnit<D, F, E, Exa, Meta> {
+    pub const fn set_exa_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Exa>> {
         self.change_prefix::<Exa>()
     }
 
     /// Sets the prefix to [`Zetta`]
-    pub fn set_zetta_prefix(self) -> SITypePropUnit<D, F, E, Zetta, Meta> {
+    pub const fn set_zetta_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Zetta>> {
         self.change_prefix::<Zetta>()
     }
 
     /// Sets the prefix to [`Yotta`]
-    pub fn set_yotta_prefix(self) -> SITypePropUnit<D, F, E, Yotta, Meta> {
+    pub const fn set_yotta_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Yotta>> {
         self.change_prefix::<Yotta>()
     }
 
     /// Sets the prefix to [`Ronna`]
-    pub fn set_ronna_prefix(self) -> SITypePropUnit<D, F, E, Ronna, Meta> {
+    pub const fn set_ronna_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Ronna>> {
         self.change_prefix::<Ronna>()
     }
 
     /// Sets the prefix to [`Quetta`]
-    pub fn set_quetta_prefix(self) -> SITypePropUnit<D, F, E, Quetta, Meta> {
+    pub const fn set_quetta_prefix(self) -> SIPropUnit<PrefixedUnit<Self, Quetta>> {
         self.change_prefix::<Quetta>()
     }
 }
 
 impl_type_unit! {
-    impl{T, D: Dimension, F, E, P: TypePrefix, Meta} TypeUnit<T> for SITypePropUnit<D, F, E, P, Meta>
-    where{
-        E: Add<P::Power>,
-        impl_helpers::SITypePropUnitData<D, F, Sum<E, P::Power>>: TypeUnit<T, Dimension = D>,
-    } => D
+    impl{T, I: ToSITypePropUnitData<D: Dimension>} TypeUnit<T> for SIPropUnit<I>
+    where
     {
+        GetSITypePropUnitData<I>: TypeUnit<T, Dimension = <I as ToSITypePropUnitData>::D>,
+    }
+    => <I as ToSITypePropUnitData>::D {
         fn t_build(value) {
-            impl_helpers::SITypePropUnitData::<D, F, Sum<E, P::Power>>::t_build(value)
+            GetSITypePropUnitData::<I>::t_build(value)
         }
 
         fn t_get(quantity) {
-            impl_helpers::SITypePropUnitData::<D, F, Sum<E, P::Power>>::t_get(quantity)
+            GetSITypePropUnitData::<I>::t_get(quantity)
         }
     }
 }
 
-impl<D: Dimension, F, E, P: TypePrefix, Meta> Display for SITypePropUnit<D, F, E, P, Meta>
-where
-    Meta: Display,
-{
+impl<I> Display for SIPropUnit<I>
+where I: Display {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", P::SYMBOL)?;
-        self.meta.fmt(f)
+        self.inner.fmt(f)
     }
 }
