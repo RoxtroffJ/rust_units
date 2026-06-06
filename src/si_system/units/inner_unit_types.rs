@@ -1,6 +1,6 @@
-//! Types to be used in the [`SIPropUnit`](super::SIPropUnit) struct.
+//! Types to be used in the [`SIPropUnit`] struct.
 //!
-//! You don't directly build these types. Instead, you build [`SIPropUnit`](super::SIPropUnit)s directly.
+//! You don't directly build these types. Instead, you build [`SIPropUnit`]s directly.
 
 use std::{fmt::Display, marker::PhantomData, ops::Add};
 
@@ -63,7 +63,7 @@ impl<D: Dimension, F, E, Meta> CanChangePrefix for SimpleUnit<D, F, E, Meta> {}
 
 /// A unit with a prefix.
 /// 
-/// Contains a [`SIPropUnit`](super::SIPropUnit) as inner.
+/// Contains a [`SIPropUnit`] as inner.
 #[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash; I)]
 pub struct PrefixedUnit<I, P: TypePrefix> {
     inner: I,

@@ -8,7 +8,7 @@ use derive_where::derive_where;
 
 use crate::{
     Dimension, TypeUnit, impl_type_unit, si_system::units::{
-        impl_helpers::{GetSITypePropUnitData, ToSITypePropUnitData}, inner_module_types::{PrefixedUnit, SimpleUnit}, prefix::{CanChangePrefix, TypePrefix}
+        impl_helpers::{GetSITypePropUnitData, ToSITypePropUnitData}, inner_unit_types::{PrefixedUnit, SimpleUnit}, prefix::{CanChangePrefix, TypePrefix}
     }
 };
 
@@ -17,7 +17,7 @@ pub mod prefix;
 use prefix::*;
 
 pub mod impl_helpers;
-pub mod inner_module_types;
+pub mod inner_unit_types;
 
 /// A unit proportional to the SI unit. It implements [`TypeUnit`].
 ///
@@ -58,7 +58,7 @@ impl<D: Dimension, F, E, Meta>
     /// 
     /// // We can change the centimeter prefix:
     /// let millimeter = centimeter.set_milli_prefix();
-    /// // But not of inch
+    /// // But not the prefix of inch (because make_not_prefixable was called)
     /// // let milli_inch = inch.set_milli_prefix(); // Does not compile
     /// 
     /// // Now we can test our units:

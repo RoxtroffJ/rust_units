@@ -474,7 +474,7 @@ define_prefix_type!(
 
 /// Type to indicate that there should never be a prefix.
 /// 
-/// Used in [`SITypePropUnit`](crate::si_system::units::SITypePropUnit).
+/// Used in [`SIPropUnit`](crate::si_system::units::SIPropUnit).
 #[derive(Debug,Clone,Copy,Hash,PartialEq,Eq,PartialOrd,Ord,Default)]
 pub struct NotPrefixable;
 
@@ -492,5 +492,5 @@ impl std::fmt::Display for NotPrefixable {
 
 /// Marker trait that indicates that the provided prefix type can be changed.
 /// 
-/// Used for the prefix argument in [`SITypePropUnit`](crate::si_system::units::SITypePropUnit).
+/// Used for the prefix argument in [`SIPropUnit`](crate::si_system::units::SIPropUnit).
 pub trait CanChangePrefix {}
