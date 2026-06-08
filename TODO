@@ -1,3 +1,8 @@
+# TODO
+
+- Test all operations on SIPropUnit.
 - Predefine SI System
+  - Non SI units
+  - Celsius, Fahrenheit
 - Add examples to everything throughout the crate.
 - num_traits

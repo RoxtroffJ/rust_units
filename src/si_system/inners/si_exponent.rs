@@ -29,6 +29,8 @@ use num_traits::{Inv, MulAdd, MulAddAssign, Pow};
 ///   - [`MulAdd`]
 ///   - [`MulAddAssign`]
 ///   - [`Pow`]
+/// - From [`extended_typenum`]
+///   - [`Pow`](extended_typenum::Pow)
 ///
 /// The type parameter `E` is a number representing the exponent.
 pub struct SIExponent<E> {
@@ -59,7 +61,7 @@ where
     type Output = SIExponent<<E1 as Sub<E2>>::Output>;
 
     fn div(self, _rhs: SIExponent<E2>) -> Self::Output {
-        unreachable!()
+        unreachable!("How did you build an SIExponent???")
     }
 }
 
@@ -78,7 +80,7 @@ where
     type Output = SIExponent<<E1 as Add<E2>>::Output>;
 
     fn mul(self, _rhs: SIExponent<E2>) -> Self::Output {
-        unreachable!()
+        unreachable!("How did you build an SIExponent???")
     }
 }
 
@@ -158,7 +160,7 @@ where
     type Output = SIExponent<<E as Neg>::Output>;
 
     fn inv(self) -> Self::Output {
-        unreachable!()
+        unreachable!("How did you build an SIExponent???")
     }
 }
 
@@ -170,7 +172,7 @@ where
     type Output = op!((Self * A) + B);
 
     fn mul_add(self, _a: A, _b: B) -> Self::Output {
-        unreachable!()
+        unreachable!("How did you build an SIExponent???")
     }
 }
 
@@ -188,7 +190,18 @@ where
     type Output = SIExponent<op!(E1 * E2)>;
 
     fn pow(self, _rhs: E2) -> Self::Output {
-        unreachable!()
+        unreachable!("How did you build an SIExponent???")
+    }
+}
+
+impl<E1, E2> extended_typenum::Pow<E2> for SIExponent<E1>
+where
+    E1: Mul<E2>,
+{
+    type Output = SIExponent<op!(E1 * E2)>;
+
+    fn powi(self, _rhs: E2) -> Self::Output {
+        unreachable!("How did you build an SIExponent???")
     }
 }
 

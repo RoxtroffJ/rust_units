@@ -2,17 +2,25 @@
 //!
 //! These units are computed during the compilation, and implement mainly [`TypeUnit`].
 
-use std::{fmt::Display, marker::PhantomData};
+use std::{
+    fmt::Display,
+    marker::PhantomData,
+    ops::{Div, Mul},
+};
 
 use derive_where::derive_where;
+use extended_typenum::{Integer, Pow, Rational};
+use num_traits::Inv;
 
 use crate::{
     Dimension, TypeUnit, impl_type_unit, si_system::units::{
-        impl_helpers::{GetSITypePropUnitData, ToSITypePropUnitData}, inner_unit_types::{PrefixedUnit, SimpleUnit}, prefix::{CanChangePrefix, TypePrefix}
+        impl_helpers::{GetSITypePropUnitData, ToSITypePropUnitData},
+        inner_unit_types::{DivUnits, InvUnit, MulCUnit, MulUnits, PowerUnit, PrefixedUnit, SimpleUnit},
+        prefix::{CanChangePrefix, TypePrefix},
     }
 };
 
-// pub mod constant;
+pub mod units_def;
 pub mod prefix;
 use prefix::*;
 
@@ -20,6 +28,19 @@ pub mod impl_helpers;
 pub mod inner_unit_types;
 
 /// A unit proportional to the SI unit. It implements [`TypeUnit`].
+///
+/// The following operations are supported:
+///
+/// - From [`std::ops`]:
+///   - [`Mul`]
+///   - [`Div`]
+/// - From [`num_traits`]:
+///   - [`Inv`]
+///   - [`Pow`](num_traits::Pow)
+/// - From [`extended_typenum`]:
+///   - [`Pow`]
+///
+/// Methods are also available to have constant versions of these operations.
 ///
 /// Generics description:
 /// - `I`: Inner type describing the unit. The valid types are defined in the [`inner_unit_types`] module.
@@ -29,46 +50,44 @@ pub struct SIPropUnit<I> {
     inner: I,
 }
 
-impl<D: Dimension, F, E, Meta>
-    SIPropUnit<SimpleUnit<D, F, E, Meta>>
-{
+impl<D: Dimension, F, E, Meta> SIPropUnit<SimpleUnit<D, F, E, Meta>> {
     /// Creates a new simple unit, with the given metadata.
-    /// 
+    ///
     /// In order to help with type definition, you can use the [`SimpleSIPropUnit`] type alias.
-    /// 
+    ///
     /// If this metadata implements [`Display`], so will this unit.
-    /// 
+    ///
     /// ## Example
     /// ```
     /// use rust_units::si_system::{units::*, dimensions::*};
     /// use extended_typenum::{rational, P254, U100, N2, Z0, P1};
     /// use rust_units::Unit;
-    /// 
+    ///
     /// // Create two new units of length:
-    /// 
-    /// let inch = SimpleSIPropUnit::<Length, rational!(P254; U100), N2, &str>::new("in") // One inch = 2.54 cm = 254/100 e-2 m 
+    ///
+    /// let inch = SimpleSIPropUnit::<Length, rational!(P254; U100), N2, &str>::new("in") // One inch = 2.54 cm = 254/100 e-2 m
     ///     .make_not_prefixable();
-    /// 
+    ///
     /// let centimeter = SimpleSIPropUnit::<Length, rational!(P1;), Z0, &str>::new("m") // defined as meter (which is work unit) with Centi prefix.
     ///     .set_centi_prefix();
-    /// 
+    ///
     /// // Confirm that the correct units were created:
     /// assert_eq!(format!("{inch}"), "in");
     /// assert_eq!(format!("{centimeter}"), "cm"); // In "cm", the "c" comes from prefix::Centi, the "m" comes from new("m").
-    /// 
+    ///
     /// // We can change the centimeter prefix:
     /// let millimeter = centimeter.set_milli_prefix();
     /// // But not the prefix of inch (because make_not_prefixable was called)
     /// // let milli_inch = inch.set_milli_prefix(); // Does not compile
-    /// 
+    ///
     /// // Now we can test our units:
     /// let inch_length = 42f64;
     /// let length = inch.build(inch_length);
     /// assert_eq!(format!("{inch_length:.3} {inch} = {length:.3} = {:.3} {millimeter}", length.get_in(&millimeter)), "42.000 in = 1.067 m = 1066.800 mm");
-    
+
     pub const fn new(meta: Meta) -> Self {
         Self {
-            inner: SimpleUnit::new(meta)
+            inner: SimpleUnit::new(meta),
         }
     }
 }
@@ -76,8 +95,7 @@ impl<D: Dimension, F, E, Meta>
 /// Type alias for a [`SIPropUnit`] containing a [`SimpleUnit`], ie `SIPropUnit<SimpleUnit<...>>`.
 pub type SimpleSIPropUnit<D, F, E, Meta> = SIPropUnit<SimpleUnit<D, F, E, Meta>>;
 
-impl<I> CanChangePrefix for SIPropUnit<I>
-where I: CanChangePrefix {}
+impl<I> CanChangePrefix for SIPropUnit<I> where I: CanChangePrefix {}
 
 /// Prefix change
 impl<I> SIPropUnit<I>
@@ -86,7 +104,9 @@ where
 {
     /// Changes the prefix type.
     pub const fn change_prefix<P: TypePrefix>(self) -> SIPropUnit<PrefixedUnit<Self, P>> {
-        SIPropUnit { inner: PrefixedUnit::<Self, P>::new(self)}
+        SIPropUnit {
+            inner: PrefixedUnit::<Self, P>::new(self),
+        }
     }
 
     /// Removes the prefix (if there was one).
@@ -220,6 +240,57 @@ where
     }
 }
 
+/// Operations
+impl<I> SIPropUnit<I> {
+    /// Multiplies this unit with another one.
+    pub const fn times<IOther>(
+        self,
+        other: SIPropUnit<IOther>,
+    ) -> SIPropUnit<MulUnits<Self, SIPropUnit<IOther>>> {
+        SIPropUnit {
+            inner: MulUnits::new(self, other),
+        }
+    }
+
+    /// Divides this unit by another one.
+    pub const fn per<IOther>(
+        self,
+        other: SIPropUnit<IOther>,
+    ) -> SIPropUnit<DivUnits<Self, SIPropUnit<IOther>>> {
+        SIPropUnit {
+            inner: DivUnits::new(self, other),
+        }
+    }
+
+    /// Gets the inverse (1/self) of this unit.
+    pub const fn inverse(self) -> SIPropUnit<InvUnit<Self>> {
+        SIPropUnit {
+            inner: InvUnit::new(self),
+        }
+    }
+
+    /// Integer power of this unit.
+    pub const fn power<P: Integer>(self) -> SIPropUnit<PowerUnit<Self, P>> {
+        SIPropUnit { inner: PowerUnit::new(self) }
+    }
+
+    /// Multiplication of this unit by a constant defined as F*10^E.
+    pub const fn c_times<F: Rational, E: Integer>(self) -> SIPropUnit<MulCUnit<Self, F, E>> {
+        SIPropUnit { inner: MulCUnit::new(self) }
+    }
+}
+
+/// New unit definition
+impl<I: ToSITypePropUnitData> SIPropUnit<I> 
+where 
+    I::D: Dimension
+{
+    /// Redefines the current unit as a [`SimpleSIPropUnit`] with the given metadata.
+    pub const fn redefine_as<Meta>(&self, meta: Meta) -> SimpleSIPropUnit<I::D, I::F, I::E, Meta> {
+        SimpleSIPropUnit::new(meta)
+    }
+}
+
 impl_type_unit! {
     impl{T, I: ToSITypePropUnitData<D: Dimension>} TypeUnit<T> for SIPropUnit<I>
     where
@@ -238,8 +309,61 @@ impl_type_unit! {
 }
 
 impl<I> Display for SIPropUnit<I>
-where I: Display {
+where
+    I: Display,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.inner.fmt(f)
     }
+}
+
+impl<I, IOther> Mul<SIPropUnit<IOther>> for SIPropUnit<I> {
+    type Output = SIPropUnit<MulUnits<Self, SIPropUnit<IOther>>>;
+
+    fn mul(self, rhs: SIPropUnit<IOther>) -> Self::Output {
+        self.times(rhs)
+    }
+}
+
+impl<I, IOther> Div<SIPropUnit<IOther>> for SIPropUnit<I> {
+    type Output = SIPropUnit<DivUnits<Self, SIPropUnit<IOther>>>;
+
+    fn div(self, rhs: SIPropUnit<IOther>) -> Self::Output {
+        self.per(rhs)
+    }
+}
+
+impl<I> Inv for SIPropUnit<I> {
+    type Output = SIPropUnit<InvUnit<Self>>;
+
+    fn inv(self) -> Self::Output {
+        self.inverse()
+    }
+}
+
+impl<I, P: Integer> num_traits::Pow<P> for SIPropUnit<I> {
+    type Output = SIPropUnit<PowerUnit<Self, P>>;
+
+    fn pow(self, _rhs: P) -> Self::Output {
+        self.power()
+    }
+}
+
+impl<I, P: Integer> Pow<P> for SIPropUnit<I> {
+    type Output = SIPropUnit<PowerUnit<Self, P>>;
+
+    fn powi(self, _rhs: P) -> Self::Output {
+        self.power()
+    }
+}
+
+impl<I> ToSITypePropUnitData for SIPropUnit<I>
+where
+    I: ToSITypePropUnitData
+{
+    type D = I::D;
+
+    type F = I::F;
+
+    type E = I::E;
 }

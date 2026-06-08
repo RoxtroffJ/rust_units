@@ -4,7 +4,7 @@
 
 use crate::si_system::SIDimension;
 use derive_where::derive_where;
-use extended_typenum::{op, TypeDisplay};
+use extended_typenum::TypeDisplay;
 use num_traits::{Inv, MulAdd, MulAddAssign, Pow};
 use std::{marker::PhantomData, ops::*};
 
@@ -13,6 +13,7 @@ use std::{marker::PhantomData, ops::*};
 /// It is meant to be used in a [`SIDimension`]. It does not implement [`Dimension`](crate::Dimension), the [`SIDimension`] does.
 ///
 /// Note that dimensionless is still a dimension, with its units ([`DEGREE`], [`RADIAN`], ...), even if it just represents a number.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Dimensionless;
 
 mod si_exponent;
@@ -158,12 +159,12 @@ impl<RHS> Pow<RHS> for Dimensionless {
 
 impl<I, O, E, Rest, RHS> Pow<RHS> for SIDim<I, O, E, Rest>
 where
-    E: Mul<RHS>,
+    E: Pow<RHS>,
     Rest: Pow<RHS>,
-    SIDim<I, O, op!(E * RHS), <Rest as Pow<RHS>>::Output>: SimplifyHead,
-    SimplH<SIDim<I, O, op!(E * RHS), <Rest as Pow<RHS>>::Output>>: Default,
+    SIDim<I, O, <E as Pow<RHS>>::Output, <Rest as Pow<RHS>>::Output>: SimplifyHead,
+    SimplH<SIDim<I, O, <E as Pow<RHS>>::Output, <Rest as Pow<RHS>>::Output>>: Default,
 {
-    type Output = SimplH<SIDim<I, O, op!(E * RHS), <Rest as Pow<RHS>>::Output>>;
+    type Output = SimplH<SIDim<I, O, <E as Pow<RHS>>::Output, <Rest as Pow<RHS>>::Output>>;
 
     fn pow(self, _rhs: RHS) -> Self::Output {
         Self::Output::default()
