@@ -9,69 +9,23 @@ use std::{
 };
 
 use derive_where::derive_where;
-use extended_typenum::{AsRational, False, Integer, IntoRational, P1, Pow, Rational, Sum, True, rational};
+use extended_typenum::{
+    rational, AsRational, False, Integer, IntoRational, Pow, Rational, Sum, True, P1,
+};
 use num_traits::Inv;
 
 use crate::{
     si_system::units::{
         impl_helpers::{self, ToSITypePropUnitData},
         prefix::{self, CanChangePrefix, TypePrefix},
-        SIPropUnit, SimpleSIPropUnit,
+        SIPropUnit, SimpleSIPropUnitExtended,
     },
     Dimension,
 };
 
 // --------------------------------------------------
-// SimpleUnit
+// Helper traits and structs
 // --------------------------------------------------
-
-/// Simple unit proportional to the work unit.
-///
-/// There are five generics:
-/// - `D`: [`Dimension`] of the unit.
-/// - `F` and `E`: Proportionality constant of this unit.
-///   
-///   If k is the proportionality constant (so [`WorkUnit`](crate::WorkUnit) = k * ThisUnit),
-///   k can be written as F*10^E.
-///   
-///   `F` should be a [`rational`](mod@extended_typenum::rational) and `E` an [`integer`](extended_typenum::int).
-/// - `Meta`: Some runtime metadata that can implement traits like [`Display`].
-#[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash; Meta)]
-pub struct SimpleUnit<D: Dimension, F, E, Meta> {
-    data: PhantomData<impl_helpers::SITypePropUnitData<D, F, E>>,
-    meta: Meta,
-}
-
-impl<D: Dimension, F, E, Meta> SimpleUnit<D, F, E, Meta> {
-    /// Create a new inner simple unit with the given metadata.
-    ///
-    /// Usually, this metadata is a &'static str.
-    /// If the metadata implements [`Display`], so will the build unit.
-    /// ```
-    pub(super) const fn new(meta: Meta) -> Self {
-        Self {
-            data: PhantomData,
-            meta,
-        }
-    }
-}
-
-impl<D: Dimension, F, E, Meta> Display for SimpleUnit<D, F, E, Meta>
-where
-    Meta: Display,
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.meta.fmt(f)
-    }
-}
-
-impl<D: Dimension, F, E, Meta> ToSITypePropUnitData for SimpleUnit<D, F, E, Meta> {
-    type D = D;
-    type F = F;
-    type E = E;
-}
-
-impl<D: Dimension, F, E, Meta> CanChangePrefix for SimpleUnit<D, F, E, Meta> {}
 
 /// Indicates if the implementing type is simple or not.
 pub trait IsSimple {
@@ -86,10 +40,6 @@ where
     T: IsSimple,
 {
     type Result = T::Result;
-}
-
-impl<D: Dimension, E, F, Meta> IsSimple for SimpleUnit<D, E, F, Meta> {
-    type Result = True;
 }
 
 /// Helper struct for some Display implementations.
@@ -117,6 +67,119 @@ impl<T: Display> Display for WithIsSimpleStruct<T, False> {
         self.val.fmt(f)?;
         write!(f, ")")
     }
+}
+
+// // --------------------------------------------------
+// // SimpleUnitSimplified
+// // --------------------------------------------------
+
+// /// Simple unit proportional to the work unit.
+// ///
+// /// There are five generics:
+// /// - `D`: [`Dimension`] of the unit.
+// /// - `F` and `E`: Proportionality constant of this unit.
+// ///
+// ///   If k is the proportionality constant (so [`WorkUnit`](crate::WorkUnit) = k * ThisUnit),
+// ///   k can be written as F*10^E.
+// ///
+// ///   `F` should be a [`rational`](mod@extended_typenum::rational) and `E` an [`integer`](extended_typenum::int).
+// /// - `Meta`: Some runtime metadata that can implement traits like [`Display`].
+// #[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash; Meta)]
+// pub struct SimpleUnit<D: Dimension, F, E, Meta> {
+//     data: PhantomData<impl_helpers::SITypePropUnitDataSimplified<D, F, E>>,
+//     meta: Meta,
+// }
+
+// impl<D: Dimension, F, E, Meta> SimpleUnit<D, F, E, Meta> {
+//     /// Create a new inner simple unit with the given metadata.
+//     ///
+//     /// Usually, this metadata is a &'static str.
+//     /// If the metadata implements [`Display`], so will the build unit.
+//     /// ```
+//     pub(super) const fn new(meta: Meta) -> Self {
+//         Self {
+//             data: PhantomData,
+//             meta,
+//         }
+//     }
+// }
+
+// impl<D: Dimension, F, E, Meta> Display for SimpleUnit<D, F, E, Meta>
+// where
+//     Meta: Display,
+// {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         self.meta.fmt(f)
+//     }
+// }
+
+// impl<D: Dimension, F, E, Meta> ToSITypePropUnitDataSimplified for SimpleUnit<D, F, E, Meta> {
+//     type D = D;
+//     type F = F;
+//     type E = E;
+// }
+
+// impl<D: Dimension, F, E, Meta> CanChangePrefix for SimpleUnit<D, F, E, Meta> {}
+
+// impl<D: Dimension, E, F, Meta> IsSimple for SimpleUnit<D, E, F, Meta> {
+//     type Result = True;
+// }
+
+// --------------------------------------------------
+// SimpleUnit
+// --------------------------------------------------
+
+/// Simple unit proportional to the work unit.
+///
+/// Explanation of the generics:
+/// - `D`: [`Dimension`] of the unit.
+/// - `F`, `E` and `PiE`: Proportionality constant of this unit.
+///   
+///   If k is the proportionality constant (so [`WorkUnit`](crate::WorkUnit) = k * ThisUnit),
+///   k can be written as F*10^E*PI^PiE.
+///   
+///   `F` should be a [`rational`](mod@extended_typenum::rational), `E` and `PiE` [`integer`](extended_typenum::int)s.
+/// - `Meta`: Some runtime metadata that can implement traits like [`Display`].
+#[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash; Meta)]
+pub struct SimpleUnit<D: Dimension, F, E, PiE, Meta> {
+    data: PhantomData<impl_helpers::SITypePropUnitData<D, F, E, PiE>>,
+    meta: Meta,
+}
+
+impl<D: Dimension, F, E, PiE, Meta> SimpleUnit<D, F, E, PiE, Meta> {
+    /// Create a new inner simple unit with the given metadata.
+    ///
+    /// Usually, this metadata is a &'static str.
+    /// If the metadata implements [`Display`], so will the build unit.
+    /// ```
+    pub(super) const fn new(meta: Meta) -> Self {
+        Self {
+            data: PhantomData,
+            meta,
+        }
+    }
+}
+
+impl<D: Dimension, F, E, PiE, Meta> Display for SimpleUnit<D, F, E, PiE, Meta>
+where
+    Meta: Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.meta.fmt(f)
+    }
+}
+
+impl<D: Dimension, F, E, PiE, Meta> ToSITypePropUnitData for SimpleUnit<D, F, E, PiE, Meta> {
+    type D = D;
+    type F = F;
+    type E = E;
+    type PiE = PiE;
+}
+
+impl<D: Dimension, F, E, PiE, Meta> CanChangePrefix for SimpleUnit<D, F, E, PiE, Meta> {}
+
+impl<D: Dimension, F, E, PiE, Meta> IsSimple for SimpleUnit<D, F, E, PiE, Meta> {
+    type Result = True;
 }
 
 // --------------------------------------------------
@@ -159,7 +222,7 @@ pub type GetPrefix<T> = <T as DecomposePrefix>::Prefix;
 /// Alias to get base type of a [`DecomposePrefix`].
 pub type GetBase<T> = <T as DecomposePrefix>::Base;
 
-impl<D: Dimension, F, E, Meta> DecomposePrefix for SimpleUnit<D, F, E, Meta> {
+impl<D: Dimension, F, E, PiE, Meta> DecomposePrefix for SimpleUnit<D, F, E, PiE, Meta> {
     type Prefix = prefix::None;
 
     type Base = Self;
@@ -169,12 +232,12 @@ impl<D: Dimension, F, E, Meta> DecomposePrefix for SimpleUnit<D, F, E, Meta> {
     }
 }
 
-impl<D: Dimension, F, E, Meta, P: TypePrefix> DecomposePrefix
-    for PrefixedUnit<SimpleSIPropUnit<D, F, E, Meta>, P>
+impl<D: Dimension, F, E, PiE, Meta, P: TypePrefix> DecomposePrefix
+    for PrefixedUnit<SimpleSIPropUnitExtended<D, F, E, PiE, Meta>, P>
 {
     type Prefix = P;
 
-    type Base = SimpleUnit<D, F, E, Meta>;
+    type Base = SimpleUnit<D, F, E, PiE, Meta>;
 
     fn get_ref_base(&self) -> &Self::Base {
         &self.inner.inner
@@ -216,6 +279,7 @@ where
     type D = <GetBase<Self> as ToSITypePropUnitData>::D;
     type F = <GetBase<Self> as ToSITypePropUnitData>::F;
     type E = Sum<<GetBase<Self> as ToSITypePropUnitData>::E, P::Power>;
+    type PiE = <GetBase<Self> as ToSITypePropUnitData>::PiE;
 }
 
 impl<I, P: TypePrefix> CanChangePrefix for PrefixedUnit<I, P> where P: CanChangePrefix {}
@@ -261,17 +325,17 @@ impl<U1, U2> ToSITypePropUnitData for MulUnits<U1, U2>
 where
     U1: ToSITypePropUnitData,
     U2: ToSITypePropUnitData,
-    <U1 as ToSITypePropUnitData>::D: Mul<<U2 as ToSITypePropUnitData>::D>,
-    <<U1 as ToSITypePropUnitData>::D as Mul<<U2 as ToSITypePropUnitData>::D>>::Output: Dimension,
+    U1::D: Mul<U2::D>,
+    <U1::D as Mul<U2::D>>::Output: Dimension,
 
-    <U1 as ToSITypePropUnitData>::F: Mul<<U2 as ToSITypePropUnitData>::F>,
-    <U1 as ToSITypePropUnitData>::E: Add<<U2 as ToSITypePropUnitData>::E>,
+    U1::F: Mul<U2::F>,
+    U1::E: Add<U2::E>,
+    U1::PiE: Add<U2::PiE>,
 {
-    type D = <<U1 as ToSITypePropUnitData>::D as Mul<<U2 as ToSITypePropUnitData>::D>>::Output;
-
-    type F = <<U1 as ToSITypePropUnitData>::F as Mul<<U2 as ToSITypePropUnitData>::F>>::Output;
-
-    type E = <<U1 as ToSITypePropUnitData>::E as Add<<U2 as ToSITypePropUnitData>::E>>::Output;
+    type D = <U1::D as Mul<U2::D>>::Output;
+    type F = <U1::F as Mul<U2::F>>::Output;
+    type E = <U1::E as Add<U2::E>>::Output;
+    type PiE = <U1::PiE as Add<U2::PiE>>::Output;
 }
 
 impl<U1, U2> IsSimple for MulUnits<U1, U2> {
@@ -319,17 +383,17 @@ impl<U1, U2> ToSITypePropUnitData for DivUnits<U1, U2>
 where
     U1: ToSITypePropUnitData,
     U2: ToSITypePropUnitData,
-    <U1 as ToSITypePropUnitData>::D: Div<<U2 as ToSITypePropUnitData>::D>,
-    <<U1 as ToSITypePropUnitData>::D as Div<<U2 as ToSITypePropUnitData>::D>>::Output: Dimension,
+    U1::D: Div<U2::D>,
+    <U1::D as Div<U2::D>>::Output: Dimension,
 
-    <U1 as ToSITypePropUnitData>::F: Div<<U2 as ToSITypePropUnitData>::F>,
-    <U1 as ToSITypePropUnitData>::E: Sub<<U2 as ToSITypePropUnitData>::E>,
+    U1::F: Div<U2::F>,
+    U1::E: Sub<U2::E>,
+    U1::PiE: Sub<U2::PiE>,
 {
-    type D = <<U1 as ToSITypePropUnitData>::D as Div<<U2 as ToSITypePropUnitData>::D>>::Output;
-
-    type F = <<U1 as ToSITypePropUnitData>::F as Div<<U2 as ToSITypePropUnitData>::F>>::Output;
-
-    type E = <<U1 as ToSITypePropUnitData>::E as Sub<<U2 as ToSITypePropUnitData>::E>>::Output;
+    type D = <U1::D as Div<U2::D>>::Output;
+    type F = <U1::F as Div<U2::F>>::Output;
+    type E = <U1::E as Sub<U2::E>>::Output;
+    type PiE = <U1::PiE as Sub<U2::PiE>>::Output;
 }
 
 impl<U1, U2> IsSimple for DivUnits<U1, U2> {
@@ -375,10 +439,12 @@ where
     <U::D as Inv>::Output: Dimension,
     rational!(P1): Div<U::F>,
     U::E: Neg,
+    U::PiE: Neg,
 {
     type D = <U::D as Inv>::Output;
     type F = <rational!(P1) as Div<U::F>>::Output;
     type E = <U::E as Neg>::Output;
+    type PiE = <U::PiE as Neg>::Output;
 }
 
 impl<U> IsSimple for InvUnit<U> {
@@ -399,42 +465,50 @@ pub struct PowerUnit<U, E: Integer> {
 impl<U, E: Integer> PowerUnit<U, E> {
     /// Creates a new power unit
     pub(super) const fn new(unit: U) -> Self {
-        Self { unit, exponent: PhantomData}
+        Self {
+            unit,
+            exponent: PhantomData,
+        }
     }
 }
 
-
-impl<U, E: Integer> Display for PowerUnit<U, E> 
+impl<U, E: Integer> Display for PowerUnit<U, E>
 where
     U: IsSimple,
     for<'a> WithIsSimple<&'a U>: Display,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        WithIsSimpleStruct { val: &self.unit, res: PhantomData }.fmt(f)?;
+        WithIsSimpleStruct {
+            val: &self.unit,
+            res: PhantomData,
+        }
+        .fmt(f)?;
         write!(f, "^")?;
         E::I32.fmt(f)
     }
 }
 
-impl<U, E: Integer> ToSITypePropUnitData for PowerUnit<U, E> 
+impl<U, E: Integer> ToSITypePropUnitData for PowerUnit<U, E>
 where
     E: IntoRational,
     U: ToSITypePropUnitData,
-    
+
     U::D: Pow<E>,
     <U::D as Pow<E>>::Output: Dimension,
     U::F: Pow<AsRational<E>>,
     U::E: Mul<E>,
+    U::PiE: Mul<E>,
 {
     type D = <U::D as Pow<E>>::Output;
 
     type F = <U::F as Pow<AsRational<E>>>::Output;
 
     type E = <U::E as Mul<E>>::Output;
+
+    type PiE = <U::PiE as Mul<E>>::Output;
 }
 
-impl<U, E: Integer> IsSimple for PowerUnit<U, E> 
-{
+impl<U, E: Integer> IsSimple for PowerUnit<U, E> {
     type Result = True;
 }
 
@@ -453,7 +527,11 @@ pub struct MulCUnit<U, F: Rational, E: Integer> {
 impl<U, F: Rational, E: Integer> MulCUnit<U, F, E> {
     /// Creates a new unit by multiplying one by a constant.
     pub(super) const fn new(unit: U) -> Self {
-        Self { unit, k_f: PhantomData, k_e: PhantomData }
+        Self {
+            unit,
+            k_f: PhantomData,
+            k_e: PhantomData,
+        }
     }
 }
 
@@ -468,7 +546,11 @@ where
         if e != 0 {
             write!(f, "e{e}")?;
         }
-        WithIsSimpleStruct { val: &self.unit, res: PhantomData }.fmt(f)
+        WithIsSimpleStruct {
+            val: &self.unit,
+            res: PhantomData,
+        }
+        .fmt(f)
     }
 }
 
@@ -477,15 +559,86 @@ where
     U: ToSITypePropUnitData,
     U::D: Dimension,
     U::F: Mul<F>,
-    U::E: Add<E>
+    U::E: Add<E>,
 {
     type D = U::D;
-
     type F = <U::F as Mul<F>>::Output;
-
     type E = <U::E as Add<E>>::Output;
+    type PiE = U::PiE;
 }
 
 impl<U, F: Rational, E: Integer> IsSimple for MulCUnit<U, F, E> {
+    type Result = False;
+}
+
+// --------------------------------------------------
+// MulCUnitExtended
+// --------------------------------------------------
+
+/// Multiplication of a unit by a constant expressed as F*10^E.
+#[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash; U)]
+pub struct MulCUnitExtended<U, F: Rational, E: Integer, PiE: Integer> {
+    unit: U,
+    k_f: PhantomData<F>,
+    k_e: PhantomData<E>,
+    k_pi_e: PhantomData<PiE>,
+}
+
+impl<U, F: Rational, E: Integer, PiE: Integer> MulCUnitExtended<U, F, E, PiE> {
+    /// Creates a new unit by multiplying one by a constant.
+    pub(super) const fn new(unit: U) -> Self {
+        Self {
+            unit,
+            k_f: PhantomData,
+            k_e: PhantomData,
+            k_pi_e: PhantomData,
+        }
+    }
+}
+
+impl<U, F: Rational, E: Integer, PiE: Integer> Display for MulCUnitExtended<U, F, E, PiE>
+where
+    U: IsSimple,
+    for<'a> WithIsSimple<&'a U>: Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        F::F64.fmt(f)?;
+        let pi_e = PiE::I64;
+        if pi_e != 0 {
+            write!(f, "PI")?;
+            if pi_e != 1 {
+                write!(f, "^{pi_e}")?;
+            }
+            write!(f, "*")?;
+        }
+
+        let e = E::I64;
+        if e != 0 {
+            write!(f, "e{e}")?;
+        }
+        WithIsSimpleStruct {
+            val: &self.unit,
+            res: PhantomData,
+        }
+        .fmt(f)
+    }
+}
+
+impl<U, F: Rational, E: Integer, PiE: Integer> ToSITypePropUnitData
+    for MulCUnitExtended<U, F, E, PiE>
+where
+    U: ToSITypePropUnitData,
+    U::D: Dimension,
+    U::F: Mul<F>,
+    U::E: Add<E>,
+    U::PiE: Add<PiE>,
+{
+    type D = U::D;
+    type F = <U::F as Mul<F>>::Output;
+    type E = <U::E as Add<E>>::Output;
+    type PiE = <U::PiE as Add<PiE>>::Output;
+}
+
+impl<U, F: Rational, E: Integer, PiE: Integer> IsSimple for MulCUnitExtended<U, F, E, PiE> {
     type Result = False;
 }

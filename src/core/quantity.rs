@@ -36,12 +36,16 @@ use std::{fmt::Display, marker::PhantomData, ops::*};
 ///   - [`MulAdd`]
 ///   - [`MulAddAssign`]
 ///   - [`Pow`]
+///   - [`Signed`]
+///   - [`Unsigned`]
+///
+/// - all from [`num_traits::float`] if dimension permits it (see [`float`] module).
 ///
 /// If you want to use a quantity in other operations, you need to implement it yourself.
 ///
 /// Similarly to Rust's [`Option`] enum, this struct also provides functions to help with references management such as
 /// [`as_ref`](Quantity::as_ref), [`as_mut`](Quantity::as_mut), [`as_deref`](Quantity::as_deref), [`as_deref_mut`](Quantity::as_deref_mut).
-#[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash; T)]
+#[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash; T)]
 pub struct Quantity<T, D: Dimension> {
     value: T,
     dimension: PhantomData<D>,
@@ -121,6 +125,27 @@ impl<T, D: Dimension> Quantity<T, D> {
             value: &mut self.value,
             dimension: PhantomData,
         }
+    }
+
+    /// Applies [`Into::into`] to the inner value.
+    pub fn into_q<T2>(self) -> Quantity<T2, D>
+    where T: Into<T2>
+    {
+        Quantity::from_work(self.get_work().into())
+    }
+
+    /// Applies [`TryInto::try_into`] to the inner value.
+    pub fn try_into_q<T2>(self) -> Result<Quantity<T2, D>, T::Error>
+    where T: TryInto<T2>
+    {
+        Ok(Quantity::from_work(self.get_work().try_into()?))
+    }
+
+    /// Applies [`num_traits::AsPrimitive::as_`] to the inner value.
+    pub fn as_<T2: Copy + 'static>(self) -> Quantity<T2, D>
+    where T: num_traits::AsPrimitive<T2>
+    {
+        Quantity::from_work(self.get_work().as_())
     }
 }
 
@@ -350,7 +375,8 @@ where
     D: MulAddAssign<DA, DB>,
 {
     fn mul_add_assign(&mut self, a: Quantity<A, DA>, b: Quantity<B, DB>) {
-        self.get_mut_work().mul_add_assign(a.get_work(), b.get_work());
+        self.get_mut_work()
+            .mul_add_assign(a.get_work(), b.get_work());
     }
 }
 
@@ -378,3 +404,5 @@ where
         D::fmt(f)
     }
 }
+
+pub mod float;

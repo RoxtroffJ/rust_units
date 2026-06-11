@@ -1,6 +1,6 @@
 //! International System of units (SI) and SI-like dimension systems.
 //!
-//! Implementation of the SI system and helpers to create other systems that use the same logic.
+//! Implementation of the SI [`Dimension`](crate::Dimension) system and helpers to create other systems that use the same logic.
 //!
 //! A SI-like dimension system is a set of base dimensions. These dimensions are defined and controlled by an exponent,
 //! and are independent from each other.
@@ -17,7 +17,7 @@
 //! Multiplying two [`Quantities`](crate::Quantity) together is always possible,
 //! and the result's dimension exponents are equal to the sum of the corresponding exponents of the two multiplied quantities.
 //!
-//! Here is the list of supported operations for dimensions:
+//! Here is the list of supported operations for [`SIDimension`]:
 //!
 //! - From [`std::ops`]:
 //!   - [`Add`]
@@ -39,7 +39,7 @@
 //! - From [`extended_typenum`]
 //!   - [`Pow`](extended_typenum::Pow)
 //!
-//! Implementing more operations on the dimensions can be done in two ways:
+//! Implementing more operations on [`SIDimension`] can be done in two ways:
 //! - Use existing operators to define your own (recommended):
 //! ```
 //! use extended_typenum::operator_aliases::*;
@@ -170,6 +170,13 @@ use derive_where::derive_where;
 use extended_typenum::{operator_aliases::Sum, U0, U1};
 use std::{marker::PhantomData, ops::*};
 
+use crate::{
+    float::{FloatAngleToDimless, FloatAtan2, FloatDimlessToAngle, FloatIntegerDecode},
+    markers,
+    si_system::dimensions::Angle,
+    Dimension, Quantity,
+};
+
 /// A SI(-like) dimension.
 ///
 /// More precisely, this struct is just a wrapper that implements [`Dimension`](crate::Dimension).
@@ -188,6 +195,14 @@ pub mod inners;
 
 /// Dimensionless dimension, compatible with all [`SIDimSystem`]s.
 pub type SIDimensionless = SIDimension<inners::Dimensionless>;
+
+/// Creates a new dimensionless value, from the work unit of [`SIDimensionless`]
+pub const fn dimless<T>(value: T) -> Quantity<T, SIDimensionless> {
+    Quantity::from_work(value)
+}
+
+impl markers::DimensionLess for SIDimensionless {}
+impl markers::Angle for Angle {}
 
 /// A SI-like dimension system.
 ///
@@ -337,4 +352,81 @@ macro_rules! si_add_dim {
     ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident, $Exp:ty $(;$str:expr)?) $($rest:tt)*) => {
         $crate::si_add_dim!($System => ($(#[$meta])* $vis $Dim, $(#[$meta_id])* $vis_id $DimID, $Exp $(;$str)?), $($rest)*);
     };
+}
+
+impl<T: num_traits::Float, D> FloatAngleToDimless<Quantity<T, SIDimensionless>>
+    for Quantity<T, SIDimension<D>>
+where
+    SIDimension<D>: Dimension + markers::Angle,
+{
+    fn sin(self) -> Quantity<T, SIDimensionless> {
+        dimless(self.get_work().sin())
+    }
+
+    fn cos(self) -> Quantity<T, SIDimensionless> {
+        dimless(self.get_work().cos())
+    }
+
+    fn tan(self) -> Quantity<T, SIDimensionless> {
+        dimless(self.get_work().tan())
+    }
+
+    fn sin_cos(self) -> (Quantity<T, SIDimensionless>, Quantity<T, SIDimensionless>) {
+        let (s, c) = self.get_work().sin_cos();
+        (dimless(s), dimless(c))
+    }
+}
+
+impl<T: num_traits::Float, D> FloatDimlessToAngle<Quantity<T, SIDimension<D>>>
+    for Quantity<T, SIDimensionless>
+where
+    SIDimension<D>: Dimension + markers::Angle,
+{
+    fn asin(self) -> Quantity<T, SIDimension<D>> {
+        Quantity::from_work(self.get_work().asin())
+    }
+
+    fn acos(self) -> Quantity<T, SIDimension<D>> {
+        Quantity::from_work(self.get_work().acos())
+    }
+
+    fn atan(self) -> Quantity<T, SIDimension<D>> {
+        Quantity::from_work(self.get_work().atan())
+    }
+}
+
+impl<T: num_traits::Float, D> FloatAtan2<Quantity<T, Angle>> for Quantity<T, SIDimension<D>>
+where
+    SIDimension<D>: Dimension + Div,
+    <SIDimension<D> as Div>::Output: Dimension + markers::DimensionLess,
+{
+    fn atan2(self, other: Self) -> Quantity<T, Angle> {
+        Quantity::from_work(self.get_work().atan2(other.get_work()))
+    }
+}
+
+impl<T: num_traits::Float, D>
+    FloatIntegerDecode<
+        Quantity<u64, SIDimension<D>>,
+        i16,
+        Quantity<i8, SIDimensionless>,
+    > for Quantity<T, SIDimension<D>>
+where
+    SIDimension<D>: Dimension,
+{
+    fn integer_decode(
+        self,
+    ) -> (
+        Quantity<u64, SIDimension<D>>,
+        i16,
+        Quantity<i8, SIDimensionless>,
+    ) {
+        let (mantissa, exp, sgn) = self.get_work().integer_decode();
+
+        (
+            Quantity::from_work(mantissa),
+            exp,
+            Quantity::from_work(sgn),
+        )
+    }
 }

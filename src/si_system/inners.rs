@@ -12,7 +12,7 @@ use std::{marker::PhantomData, ops::*};
 ///
 /// It is meant to be used in a [`SIDimension`]. It does not implement [`Dimension`](crate::Dimension), the [`SIDimension`] does.
 ///
-/// Note that dimensionless is still a dimension, with its units ([`DEGREE`], [`RADIAN`], ...), even if it just represents a number.
+/// Note that dimensionless is still a dimension, even if it just represents a number.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Dimensionless;
 

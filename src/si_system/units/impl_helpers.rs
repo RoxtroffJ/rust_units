@@ -1,6 +1,6 @@
 //! Contains structs and traits that help with the implementation of SI units.
 
-use std::ops::{Div, Mul, Rem, Sub};
+use std::{f64::consts::PI, ops::{Div, Mul, Rem, Sub}};
 
 use extended_typenum::{
     Diff, Eq, False, Integer, IsEqual, Mod, NInt, NonZero, PInt, Quot, Rational, True, UInt,
@@ -12,26 +12,34 @@ use crate::{impl_type_unit, Dimension, Quantity};
 
 /// Data that indicates at compile time the [`Dimension`] and proportionality constant of a unit.
 ///
-/// There are three generics:
+/// There are four generics:
 /// - `D`: [`Dimension`] of the unit.
-/// - `F` and `E`: Proportionality constant of this unit.
+/// - `F`, `E`, `PiE`: Proportionality constant of this unit.
 ///
 ///    If k is the proportionality constant (so [`WorkUnit`](crate::WorkUnit) = k * ThisUnit),
-///    k can be written as F*10^E.
+///    k can be written as F*10^E*pi^PiE.
 ///
-///    `F` should be a [`rational`](mod@extended_typenum::rational) and `E` an [`integer`](extended_typenum::int).
+///    `F` should be a [`rational`](mod@extended_typenum::rational) and `E` and `PiE` [`integer`](extended_typenum::int)s.
 ///
 #[derive_where(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SITypePropUnitData<D: Dimension, F, E> {
+pub struct SITypePropUnitData<D: Dimension, F, E, PiE> {
     dim: PhantomData<D>,
     float: PhantomData<F>,
     exp: PhantomData<E>,
+    pi_exp: PhantomData<PiE>,
 }
 
-/// Trait that indicates a corresponding [`SITypePropUnitData`] to the implementing type.
+/// Same as [`SITypePropUnitData`] but without the pi term.
+pub struct SITypePropUnitDataSimplified<D: Dimension, F, E> {
+    dim: PhantomData<D>,
+    float: PhantomData<F>,
+    exp: PhantomData<E>
+}
+
+/// Trait that indicates a corresponding [`SITypePropUnitDataSimplified`] to the implementing type, with PiE = 0.
 ///
-/// Works with the [`GetSITypePropUnitData`] alias.
-pub trait ToSITypePropUnitData {
+/// Works with the [`GetSITypePropUnitData`] and [`GetSITypePropUnitDataSimplified`] aliases.
+pub trait ToSITypePropUnitDataSimplified {
     /// [`Dimension`] type.
     type D;
     /// Float part of the proportionality constant.
@@ -40,12 +48,44 @@ pub trait ToSITypePropUnitData {
     type E;
 }
 
+/// Similar as [`ToSITypePropUnitData`] but adds a power of pi to the proportionality constant.
+/// 
+/// Works with the [`GetSITypePropUnitData`] alias.
+pub trait ToSITypePropUnitData {
+    /// [`Dimension`] type.
+    type D;
+    /// Float part of the proportionality constant.
+    type F;
+    /// Exponent part of the proportionality constant.
+    type E;
+    /// Exponent of the pi part of the proportionality constant.
+    type PiE;
+}
+
 /// The [`SITypePropUnitData`] corresponding to a type.
 pub type GetSITypePropUnitData<T> = SITypePropUnitData<
     <T as ToSITypePropUnitData>::D,
     <T as ToSITypePropUnitData>::F,
     <T as ToSITypePropUnitData>::E,
+    <T as ToSITypePropUnitData>::PiE,
 >;
+
+
+/// The [`SITypePropUnitDataSimplified`] corresponding to a type.
+pub type GetSITypePropUnitDataSimplified<T> = SITypePropUnitDataSimplified<
+    <T as ToSITypePropUnitDataSimplified>::D,
+    <T as ToSITypePropUnitDataSimplified>::F,
+    <T as ToSITypePropUnitDataSimplified>::E,
+>;
+
+impl<T> ToSITypePropUnitData for T
+where T: ToSITypePropUnitDataSimplified
+{
+    type D = T::D;
+    type F = T::F;
+    type E = T::E;
+    type PiE = Z0;
+}
 
 /// Determines if the given constant, defined as F*10^E is 1.
 pub trait IsOne {
@@ -63,6 +103,9 @@ pub struct IsOneChecker<Num, Den, E, R> {
     exp: PhantomData<E>,
     rem: PhantomData<R>,
 }
+
+// ---------- Impl IsOne for IsOneChecker ----------
+
 
 /// Case E = 0 -> is one if num == den
 impl<Num, Den, R> IsOne for IsOneChecker<Num, Den, U0, R>
@@ -93,8 +136,31 @@ where
     > as IsOne>::Output;
 }
 
+// ---------- Impl IsOne for SITypePropUnitData ----------
+
+
+/// Case PiE > 0
+impl<D: Dimension, F, E, U: Unsigned + NonZero> IsOne for SITypePropUnitData<D, F, E, PInt<U>> {
+    type Output = False;
+}
+
+/// Case PiE < 0
+impl<D: Dimension, F, E, U: Unsigned + NonZero> IsOne for SITypePropUnitData<D, F, E, NInt<U>> {
+    type Output = False;
+}
+
+// Cases PiE = 0
+impl<D: Dimension, F, E> IsOne for SITypePropUnitData<D, F, E, Z0> 
+where
+    SITypePropUnitDataSimplified<D, F, E>: IsOne
+{
+    type Output = <SITypePropUnitDataSimplified<D, F, E> as IsOne>::Output;
+}
+
+// ---------- Impl IsOne for SITypePropUnitDataSimplified
+
 /// Case E > 0 and Num > 0
-impl<D, Num, Den, E> IsOne for SITypePropUnitData<D, R<PInt<Num>, Den>, PInt<E>>
+impl<D, Num, Den, E> IsOne for SITypePropUnitDataSimplified<D, R<PInt<Num>, Den>, PInt<E>>
 where
     D: Dimension,
     Num: Unsigned + NonZero,
@@ -106,7 +172,7 @@ where
 }
 
 /// Case E = 0 and Num > 0
-impl<D, Num, Den> IsOne for SITypePropUnitData<D, R<PInt<Num>, Den>, Z0>
+impl<D, Num, Den> IsOne for SITypePropUnitDataSimplified<D, R<PInt<Num>, Den>, Z0>
 where
     D: Dimension,
     Num: Unsigned + NonZero,
@@ -117,19 +183,19 @@ where
 }
 
 /// Case E < 0 and Num > 0 -> Take inverse
-impl<D, Num, Den, E> IsOne for SITypePropUnitData<D, R<PInt<Num>, Den>, NInt<E>>
+impl<D, Num, Den, E> IsOne for SITypePropUnitDataSimplified<D, R<PInt<Num>, Den>, NInt<E>>
 where
     D: Dimension,
     Num: Unsigned + NonZero,
     Den: Unsigned + NonZero,
     E: Unsigned + NonZero,
-    SITypePropUnitData<D, R<PInt<Den>, Num>, PInt<E>>: IsOne,
+    SITypePropUnitDataSimplified<D, R<PInt<Den>, Num>, PInt<E>>: IsOne,
 {
-    type Output = <SITypePropUnitData<D, R<PInt<Den>, Num>, PInt<E>> as IsOne>::Output;
+    type Output = <SITypePropUnitDataSimplified<D, R<PInt<Den>, Num>, PInt<E>> as IsOne>::Output;
 }
 
 /// Case Num = 0 -> False
-impl<D, Den, E> IsOne for SITypePropUnitData<D, R<Z0, Den>, E>
+impl<D, Den, E> IsOne for SITypePropUnitDataSimplified<D, R<Z0, Den>, E>
 where
     D: Dimension,
     Den: Unsigned + NonZero,
@@ -138,7 +204,7 @@ where
 }
 
 /// Case Num < 0 -> False
-impl<D, Num, Den, E> IsOne for SITypePropUnitData<D, R<NInt<Num>, Den>, E>
+impl<D, Num, Den, E> IsOne for SITypePropUnitDataSimplified<D, R<NInt<Num>, Den>, E>
 where
     D: Dimension,
     Num: Unsigned + NonZero,
@@ -148,35 +214,35 @@ where
 }
 
 /// Mixture of a [`SITypePropUnitData`] and it's [`IsOne`] result.
-pub struct UnitHelper<D: Dimension, F, E, One> {
-    data: PhantomData<SITypePropUnitData<D, F, E>>,
+pub struct UnitHelper<D: Dimension, F, E, PiE, One> {
+    data: PhantomData<SITypePropUnitData<D, F, E, PiE>>,
     is_one: PhantomData<One>,
 }
 
 /// Type alias to turn a [`SITypePropUnitData`] into a [`UnitHelper`]
-pub type UnitImplHelper<D, F, E> =
-    UnitHelper<D, F, E, <SITypePropUnitData<D, F, E> as IsOne>::Output>;
+pub type UnitImplHelper<D, F, E, PiE> =
+    UnitHelper<D, F, E, PiE, <SITypePropUnitData<D, F, E, PiE> as IsOne>::Output>;
 
 impl_type_unit! {
-    impl{T, D: Dimension, F, E} TypeUnit<T> for SITypePropUnitData<D, F, E>
+    impl{T, D: Dimension, F, E, PiE} TypeUnit<T> for SITypePropUnitData<D, F, E, PiE>
     where
     {
-        SITypePropUnitData<D, F, E>: IsOne,
-        UnitImplHelper<D, F, E>: TypeUnit<T, Dimension = D>
+        SITypePropUnitData<D, F, E, PiE>: IsOne,
+        UnitImplHelper<D, F, E, PiE>: TypeUnit<T, Dimension = D>
     }
     => D {
         fn t_build(value) {
-            UnitImplHelper::<D, F, E>::t_build(value)
+            UnitImplHelper::<D, F, E, PiE>::t_build(value)
         }
 
         fn t_get(quantity) {
-            UnitImplHelper::<D, F, E>::t_get(quantity)
+            UnitImplHelper::<D, F, E, PiE>::t_get(quantity)
         }
     }
 }
 
 impl_type_unit! {
-    impl{T, D: Dimension, F, E} TypeUnit<T> for UnitHelper<D, F, E, True> => D {
+    impl{T, D: Dimension, F, E, PiE} TypeUnit<T> for UnitHelper<D, F, E, PiE, True> => D {
         fn t_build(value) {
             Quantity::from_work(value)
         }
@@ -188,13 +254,13 @@ impl_type_unit! {
 }
 
 impl_type_unit! {
-    impl{T: Mul<f64, Output = T> + Div<f64, Output = T>, D: Dimension, F: Rational, E: Integer} TypeUnit<T> for UnitHelper<D, F, E, False> => D {
+    impl{T: Mul<f64, Output = T> + Div<f64, Output = T>, D: Dimension, F: Rational, E: Integer, PiE: Integer} TypeUnit<T> for UnitHelper<D, F, E, PiE, False> => D {
         fn t_build(value) {
-            Quantity::from_work(value * (F::F64 * 10f64.powi(E::I32)))
+            Quantity::from_work(value * (F::F64 * 10f64.powi(E::I32) * PI.powi(PiE::I32)))
         }
 
         fn t_get(quantity) {
-            quantity.get_work() / (F::F64 * 10f64.powi(E::I32))
+            quantity.get_work() / (F::F64 * 10f64.powi(E::I32) * PI.powi(PiE::I32))
         }
     }
 }

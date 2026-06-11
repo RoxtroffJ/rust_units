@@ -9,18 +9,19 @@ use std::{
 };
 
 use derive_where::derive_where;
-use extended_typenum::{Integer, Pow, Rational};
+use extended_typenum::{Integer, Pow, Rational, Z0};
 use num_traits::Inv;
 
 use crate::{
     Dimension, TypeUnit, impl_type_unit, si_system::units::{
         impl_helpers::{GetSITypePropUnitData, ToSITypePropUnitData},
-        inner_unit_types::{DivUnits, InvUnit, MulCUnit, MulUnits, PowerUnit, PrefixedUnit, SimpleUnit},
+        inner_unit_types::{DivUnits, InvUnit, IsSimple, MulCUnit, MulCUnitExtended, MulUnits, PowerUnit, PrefixedUnit, SimpleUnit},
         prefix::{CanChangePrefix, TypePrefix},
     }
 };
 
-pub mod units_def;
+mod units_def;
+pub use units_def::*;
 pub mod prefix;
 use prefix::*;
 
@@ -50,7 +51,7 @@ pub struct SIPropUnit<I> {
     inner: I,
 }
 
-impl<D: Dimension, F, E, Meta> SIPropUnit<SimpleUnit<D, F, E, Meta>> {
+impl<D: Dimension, F, E, PiE, Meta> SIPropUnit<SimpleUnit<D, F, E, PiE, Meta>> {
     /// Creates a new simple unit, with the given metadata.
     ///
     /// In order to help with type definition, you can use the [`SimpleSIPropUnit`] type alias.
@@ -92,8 +93,21 @@ impl<D: Dimension, F, E, Meta> SIPropUnit<SimpleUnit<D, F, E, Meta>> {
     }
 }
 
-/// Type alias for a [`SIPropUnit`] containing a [`SimpleUnit`], ie `SIPropUnit<SimpleUnit<...>>`.
-pub type SimpleSIPropUnit<D, F, E, Meta> = SIPropUnit<SimpleUnit<D, F, E, Meta>>;
+/// Type alias for a [`SIPropUnit`] containing a [`SimpleUnit`], with no power of `PI`.
+pub type SimpleSIPropUnit<D, F, E, Meta> = SIPropUnit<SimpleUnit<D, F, E, Z0, Meta>>;
+
+/// Type alias for a [`SIPropUnit`] containing a [`PrefixedUnit`] itself containing a [`SimpleSIPropUnit`].
+pub type SimplePrefixedSIPropUnit<D, F, E, Prefix, Meta> = SIPropUnit<PrefixedUnit<SimpleSIPropUnit<D, F, E, Meta>, Prefix>>;
+
+/// Same as [`SimpleSIPropUnit`] but with an extra parameter for power of pi.
+/// 
+/// The proportionality constant is now `F*10^E*PI^PiE`
+pub type SimpleSIPropUnitExtended<D, F, E, PiE, Meta> = SIPropUnit<SimpleUnit<D, F, E, PiE, Meta>>;
+
+/// Same as [`SimplePrefixedSIPropUnit`] but with an extra parameter for power of pi.
+/// 
+/// The proportionality constant is now `F*10^E*PI^PiE`
+pub type SimplePrefixedSIPropUnitExtended<D, F, E, PiE, Prefix, Meta> = SIPropUnit<PrefixedUnit<SimpleSIPropUnitExtended<D, F, E, PiE, Meta>, Prefix>>;
 
 impl<I> CanChangePrefix for SIPropUnit<I> where I: CanChangePrefix {}
 
@@ -278,6 +292,11 @@ impl<I> SIPropUnit<I> {
     pub const fn c_times<F: Rational, E: Integer>(self) -> SIPropUnit<MulCUnit<Self, F, E>> {
         SIPropUnit { inner: MulCUnit::new(self) }
     }
+
+    /// Multiplication of this unit by a constant defined as F*10^E*PI^PiE.
+    pub const fn c_times_extended<F: Rational, E: Integer, PiE: Integer>(self) -> SIPropUnit<MulCUnitExtended<Self, F, E, PiE>> {
+        SIPropUnit { inner: MulCUnitExtended::new(self) }
+    }
 }
 
 /// New unit definition
@@ -285,9 +304,9 @@ impl<I: ToSITypePropUnitData> SIPropUnit<I>
 where 
     I::D: Dimension
 {
-    /// Redefines the current unit as a [`SimpleSIPropUnit`] with the given metadata.
-    pub const fn redefine_as<Meta>(&self, meta: Meta) -> SimpleSIPropUnit<I::D, I::F, I::E, Meta> {
-        SimpleSIPropUnit::new(meta)
+    /// Redefines the current unit as a [`SimpleSIPropUnitExtended`] with the given metadata.
+    pub const fn redefine_as<Meta>(&self, meta: Meta) -> SimpleSIPropUnitExtended<I::D, I::F, I::E, I::PiE, Meta> {
+        SimpleSIPropUnitExtended::new(meta)
     }
 }
 
@@ -366,4 +385,10 @@ where
     type F = I::F;
 
     type E = I::E;
+
+    type PiE = I::PiE;
+}
+
+impl<I: IsSimple> IsSimple for SIPropUnit<I> {
+    type Result = I::Result;
 }

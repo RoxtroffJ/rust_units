@@ -1,5 +1,6 @@
 # TODO
 
+- Fix `Pow<R<N, D>>`. There is currently a problem when dividing dimension by `D`: An integer division is made, so `sqrt(METER^3)` becomes `METER` instead of invalid.
 - Test all operations on SIPropUnit.
 - Predefine SI System
   - Non SI units
