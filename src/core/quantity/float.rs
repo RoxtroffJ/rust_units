@@ -5,7 +5,7 @@
 use num_traits::Pow;
 use std::num::FpCategory;
 
-use crate::{Dimension, Quantity};
+use crate::Quantity;
 
 /// Generic trait for floating point numbers, valid for all dimensions.
 ///
