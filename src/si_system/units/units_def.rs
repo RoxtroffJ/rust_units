@@ -5,7 +5,7 @@ use extended_typenum::{consts::*, op, rational};
 use crate::si_system::{
     dimensions::*,
     units::{
-        prefix::*, SIPropUnit, SimplePrefixedSIPropUnit, SimpleSIPropUnit, SimpleSIPropUnitExtended,
+        SIPropUnit, SimplePrefixedSIPropUnit, SimplePrefixedSIPropUnitExtended, SimpleSIPropUnit, SimpleSIPropUnitExtended, prefix::*
     },
 };
 
@@ -281,38 +281,118 @@ pub const GAL: SimpleSIPropUnit<Acceleration, rational!(P1), N2, &str> = METER
 ///
 /// assert_eq!(DEGREE.build(360.0), RADIAN.build(2.0*PI))
 /// ```
-pub const DEGREE: SimpleSIPropUnitExtended<
-    Angle, 
-    rational!(P1, U180), 
-    Z0, 
-    P1, 
-    &str
-> = RADIAN
-    .c_times_extended::<rational!(P1, U180), Z0, P1>()
+pub const DEGREE: SimpleSIPropUnitExtended<Angle, rational!(P1, U18), N1, P1, &str> = RADIAN
+    .c_times_extended::<rational!(P1, U18), N1, P1>()
     .redefine_as("°");
 
 /// Gon / Gradian / Grade (angle)
-/// 
+///
 /// 100 [`GON`] = 90 [`DEGREE`]
-/// 
+///
 /// ```
 /// use rust_units::{Unit, float::*};
 /// use rust_units::si_system::units::*;
 ///
 /// assert!((GON.build(100.0) - DEGREE.build(90.0)).abs() < RADIAN.build(f64::EPSILON * 4.0))
 /// ```
-pub const GON: SimpleSIPropUnitExtended<
-    Angle,
-    rational!(P9, U180),
-    N1,
-    P1,
-    &str
-> = DEGREE.c_times::<rational!(P9), N1>().redefine_as("gon");
+pub const GON: SimpleSIPropUnitExtended<Angle, rational!(P9, U18), N2, P1, &str> =
+    DEGREE.c_times::<rational!(P9), N1>().redefine_as("gon");
 
-// mil	radian (rad)	9.817 477	E-04
-// minute (′)	radian (rad)	2.908 882	E-04
-// revolution (r)	radian (rad)	6.283 185	E+00
-// second (″)	radian (rad)	4.848 137	E-06
+/// Minute of arc (angle).
+///
+/// 60 [`MINUTE_ARC`] = 1 [`DEGREE`]
+///
+/// ```
+/// use rust_units::{Unit, float::*};
+/// use rust_units::si_system::units::*;
+///
+/// assert!((MINUTE_ARC.build(60.0) - DEGREE.build(1.0)).abs() < RADIAN.build(f64::EPSILON * 4.0))
+/// ```
+pub const MINUTE_ARC: SimplePrefixedSIPropUnitExtended<
+    Angle,
+    rational!(P1, op!(U18 * U6)),
+    N2,
+    P1,
+    NotPrefixable,
+    &str
+> = DEGREE.c_times::<rational!(P1, U6), N1>().redefine_as("′").make_not_prefixable();
+
+/// Second of arc (angle).
+///
+/// 60 [`SECOND_ARC`] = 1 [`MINUTE_ARC`]
+///
+/// ```
+/// use rust_units::{Unit, float::*};
+/// use rust_units::si_system::units::*;
+///
+/// assert!((SECOND_ARC.build(60.0) - MINUTE_ARC.build(1.0)).abs() < RADIAN.build(f64::EPSILON * 4.0))
+/// ```
+pub const SECOND_ARC: SimplePrefixedSIPropUnitExtended<
+    Angle,
+    rational!(P1, op!(U18 * U36)),
+    N3,
+    P1,
+    NotPrefixable,
+    &str
+> = MINUTE_ARC.c_times::<rational!(P1, U6), N1>().redefine_as("″").make_not_prefixable();
+
+/// Millisecond of arc (angle).
+///
+/// 60 [`MILLISECOND_ARC`] = 1 [`SECOND_ARC`]
+///
+/// ```
+/// use rust_units::{Unit, float::*};
+/// use rust_units::si_system::units::*;
+///
+/// assert!((MILLISECOND_ARC.build(60.0) - SECOND_ARC.build(1.0)).abs() < RADIAN.build(f64::EPSILON * 4.0))
+/// ```
+pub const MILLISECOND_ARC: SimplePrefixedSIPropUnitExtended<
+    Angle,
+    rational!(P1, op!(U18 * U216)),
+    N4,
+    P1,
+    NotPrefixable,
+    &str
+> = SECOND_ARC.c_times::<rational!(P1, U6), N1>().redefine_as("‴").make_not_prefixable();
+
+/// Microsecond of arc (angle).
+///
+/// 60 [`MICROSECOND_ARC`] = 1 [`MILLISECOND_ARC`]
+///
+/// ```
+/// use rust_units::{Unit, float::*};
+/// use rust_units::si_system::units::*;
+///
+/// assert!((MICROSECOND_ARC.build(60.0) - MILLISECOND_ARC.build(1.0)).abs() < RADIAN.build(f64::EPSILON * 4.0))
+/// ```
+pub const MICROSECOND_ARC: SimplePrefixedSIPropUnitExtended<
+    Angle,
+    rational!(P1, op!(U18 * U216 * U6)),
+    N5,
+    P1,
+    NotPrefixable,
+    &str
+> = MILLISECOND_ARC.c_times::<rational!(P1, U6), N1>().redefine_as("‴").make_not_prefixable();
+
+/// Revolution (angle)
+/// 
+/// 1 [`REVOLUTION`] = 2PI [`RADIAN`]
+///
+/// ```
+/// use rust_units::{Unit, float::*};
+/// use rust_units::si_system::units::*;
+/// use std::f64::consts::PI;
+///
+/// assert!((REVOLUTION.build(1.0) - RADIAN.build(2.0*PI)).abs() < RADIAN.build(f64::EPSILON * 4.0))
+/// ```
+pub const REVOLUTION: SimplePrefixedSIPropUnitExtended<
+    Angle,
+    rational!(P2),
+    Z0,
+    P1,
+    NotPrefixable,
+    &str
+> = RADIAN.c_times_extended::<rational!(P2), Z0, P1>().redefine_as("rev").make_not_prefixable();
 
 // Area and Second Moment of Area
 // acre (based on U.S. survey foot)	square meter (m2)	4.046 873	E+03
