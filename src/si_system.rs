@@ -333,7 +333,7 @@ macro_rules! si_add_dim {
             $Exp,
             $crate::si_system::inners::Dimensionless
         >>;
-        $(impl extended_typenum::TypeDisplay for $DimID {
+        $(impl $crate::si_system::__private::extended_typenum::TypeDisplay for $DimID {
             fn fmt(f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 write!(f, $str)
             }
@@ -352,6 +352,11 @@ macro_rules! si_add_dim {
     ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident, $Exp:ty $(;$str:expr)?) $($rest:tt)*) => {
         $crate::si_add_dim!($System => ($(#[$meta])* $vis $Dim, $(#[$meta_id])* $vis_id $DimID, $Exp $(;$str)?), $($rest)*);
     };
+}
+
+#[doc(hidden)]
+pub mod __private {
+    pub use extended_typenum;
 }
 
 impl<T: num_traits::Float, D> FloatAngleToDimless<Quantity<T, SIDimensionless>>
