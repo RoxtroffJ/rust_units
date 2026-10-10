@@ -13,4 +13,10 @@
 mod core;
 pub use core::*;
 
+/// Re-export of the [`extended_typenum`] crate, which is used for compile-time type-level integers and arithmetic.
+pub use extended_typenum;
+
+/// Re-export of the [`num_traits`] crate, which is used for generic numeric operations.
+pub use num_traits;
+
 pub mod si_system;
