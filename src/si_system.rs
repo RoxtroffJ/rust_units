@@ -342,7 +342,19 @@ macro_rules! si_add_dim {
     };
     // Same as previous one, but with exponent omitted.
     ($System:ty => ($(#[$meta:meta])* $vis:vis $Dim:ident, $(#[$meta_id:meta])* $vis_id:vis $DimID:ident $(;$str:expr)?), $($rest:tt)*) => {
-        $crate::si_add_dim!($System => ($(#[$meta])* $vis $Dim, $(#[$meta_id])* $vis_id $DimID, $crate::si_system::inners::SIExponent<extended_typenum::CrossInt<extended_typenum::P1>> $(;$str)?), $($rest)*);
+        $crate::si_add_dim!(
+            $System => 
+            (
+                $(#[$meta])* $vis $Dim, 
+                $(#[$meta_id])* $vis_id $DimID, 
+                $crate::si_system::inners::SIExponent<
+                    $crate::si_system::__private::extended_typenum::CrossInt<
+                        $crate::si_system::__private::extended_typenum::P1
+                    >
+                > $(;$str)?
+            ), 
+            $($rest)*
+        );
     };
 
     // Same as above, without trailing comma.
@@ -411,11 +423,8 @@ where
 }
 
 impl<T: num_traits::Float, D>
-    FloatIntegerDecode<
-        Quantity<u64, SIDimension<D>>,
-        i16,
-        Quantity<i8, SIDimensionless>,
-    > for Quantity<T, SIDimension<D>>
+    FloatIntegerDecode<Quantity<u64, SIDimension<D>>, i16, Quantity<i8, SIDimensionless>>
+    for Quantity<T, SIDimension<D>>
 where
     SIDimension<D>: Dimension,
 {
@@ -428,10 +437,6 @@ where
     ) {
         let (mantissa, exp, sgn) = self.get_work().integer_decode();
 
-        (
-            Quantity::from_work(mantissa),
-            exp,
-            Quantity::from_work(sgn),
-        )
+        (Quantity::from_work(mantissa), exp, Quantity::from_work(sgn))
     }
 }
