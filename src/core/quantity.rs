@@ -6,7 +6,7 @@ use num_traits::{ConstOne, ConstZero, Inv, MulAdd, MulAddAssign, One, Pow, Zero}
 
 use super::*;
 
-use std::{fmt::Display, marker::PhantomData, ops::*};
+use std::{fmt::Display, iter::{Product, Sum}, marker::PhantomData, ops::*};
 
 /// Dimensioned value.
 ///
@@ -26,7 +26,9 @@ use std::{fmt::Display, marker::PhantomData, ops::*};
 ///   - [`RemAssign`]
 ///   - [`Sub`]
 ///   - [`SubAssign`]
-///
+/// - from [`std::iter`]:
+///   - [`Sum`]
+///   - [`Product`]
 /// - from [`num_traits`]:
 ///   - [`One`]
 ///   - [`Zero`]
@@ -290,6 +292,28 @@ where
 {
     fn sub_assign(&mut self, rhs: Quantity<Tr, Dr>) {
         *self.get_mut_work() -= rhs.get_work()
+    }
+}
+
+impl<T, D: Dimension, A> Sum<Quantity<A, D>> for Quantity<T, D>
+where
+    T: Sum<A>,
+    D: Add<D, Output = D>,
+{
+    fn sum<I>(iter: I) -> Self 
+    where I: Iterator<Item = Quantity<A, D>> {
+        Self::from_work(iter.map(|q| q.get_work()).sum())
+    }
+}
+
+impl<T, D: Dimension, A> Product<Quantity<A, D>> for Quantity<T, D>
+where
+    T: Product<A>,
+    D: Mul<D, Output = D>,
+{
+    fn product<I>(iter: I) -> Self 
+    where I: Iterator<Item = Quantity<A, D>> {
+        Self::from_work(iter.map(|q| q.get_work()).product())
     }
 }
 
